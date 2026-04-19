@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventPulse —  AI Feedback Dashboard</title>
+  <meta name="description" content="EventPulse —  Real-time AI feedback insights for events." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; overflow: hidden; }
+
+    body {
+      background: linear-gradient(135deg, #f5efe6, #e7d8c9, #d6c3b1);
+      color: #1c1917;
+      transition: background 0.5s ease;
+    }
+
+    /*  Glass  */
+    .g1, .g2 {
+      background: rgba(255, 255, 255, 0.85); /* Increased opacity for visibility */
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(124, 90, 60, 0.15); /* Warmer, more visible border */
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(124, 90, 60, 0.08); /* Warm shadow */
+      transition: all 0.3s ease;
+    }
+
+    .g-inp {
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #1c1917;
+      border-radius: 9px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .g-inp::placeholder { color: #78716c; }
+    .g-inp:focus { outline: none; border-color: #fbbf24; background: rgba(255, 255, 255, 0.8); }
+    select.g-inp option { background: #f5efe6; color: #1c1917; }
+
+    /*  Sidebar  */
+    #sidebar {
+      width: 228px; min-width: 228px; height: 100vh;
+      background: #1c1917;
+      border-right: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex; flex-direction: column; position: relative; z-index: 10;
+      color: #fafaf9;
+    }
+
+    /*  Nav  */
+    .ni {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 14px; border-radius: 10px;
+      cursor: pointer; font-size: 13.5px; font-weight: 500;
+      color: #9ca3af; transition: all 0.3s ease;
+      position: relative; user-select: none;
+      border: 1px solid transparent;
+    }
+    .ni:hover { color: #ffffff; background: rgba(255, 255, 255, 0.05); }
+    .ni.active {
+      background: #292524;
+      color: #fbbf24;
+      border-color: rgba(255, 255, 255, 0.05);
+    }
+    .ni.active::before {
+      content: '';
+      position: absolute; left: 0; top: 20%; bottom: 20%;
+      width: 3px; border-radius: 0 3px 3px 0;
+      background: #fbbf24;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    }
+    .ni svg { flex-shrink: 0; width: 16px; height: 16px; }
+    .ni .badge { margin-left: auto; font-size: 10px; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 99px; padding: 1px 7px; color: #fbbf24; }
+
+    /*  Sections  */
+    .sec { display: none; }
+    .sec.on { display: block; animation: secIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes secIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /*  Page header  */
+    .ph { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
+    .ph h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; color: #1c1917; }
+    .ph p  { font-size: 13px; color: #78716c; margin-top: 4px; }
+
+    /*  Stat cards  */
+    .sc { padding: 22px; }
+    .sc:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12); }
+
+    /*  Buttons  */
+    .bp {
+      background: #7c5a3c; color: #fff; border: none;
+      cursor: pointer; border-radius: 10px; font-family: inherit; font-weight: 600; font-size: 13.5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(124, 90, 60, 0.2);
+    }
+    .bp:hover { background: #6b4f35; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(124, 90, 60, 0.25); }
+    .bp:active { transform: translateY(0); }
+    
+    .bs {
+      background: rgba(255, 255, 255, 0.5); color: #44403c;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.4); cursor: pointer; border-radius: 9px;
+      font-family: inherit; font-weight: 600; font-size: 12.5px;
+      transition: all 0.3s ease;
+    }
+    .bs:hover { background: rgba(255, 255, 255, 0.8); color: #1c1917; border-color: #fbbf24; }
+
+    /*  Chart bar  */
+    .cb {
+      background: linear-gradient(to top, #fbbf24, #fcd34d);
+      border-radius: 6px 6px 0 0;
+      transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .cb:hover { filter: contrast(1.1) brightness(1.1); }
+
+    /*  Progress shimmer  */
+    .ps {
+      background: linear-gradient(90deg, #fbbf24, #fcd34d, #fbbf24);
+      background-size: 200% 100%;
+      animation: psAnim 3s linear infinite;
+    }
+    @keyframes psAnim { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+    /*  Table rows  */
+    .tr:hover { background: rgba(255, 255, 255, 0.4); }
+    .atr:hover { background: rgba(251, 191, 36, 0.08); }
+
+    /*  Modal  */
+    #mo {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(28, 25, 23, 0.4);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    #mo.open { opacity: 1; pointer-events: all; }
+    #mb {
+      width: 100%; max-width: 480px;
+      background: #ffffff;
+      border: 1px solid rgba(124, 90, 60, 0.2); border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #mo.open #mb { transform: scale(1) translateY(0); }
+
+    /*  Notif panel  */
+    #np {
+      position: fixed; top: 0; right: 0; height: 100%; width: 320px; z-index: 100;
+      background: #1c1917; color: #fafaf9;
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #np.open { transform: translateX(0); }
+
+    /*  Utility colors  */
+    .text-positive { color: #22c55e; }
+    .text-negative { color: #ef4444; }
+    .text-muted { color: #44403c; }
+    .text-heading { color: #1c1917; }
+
+    /*  Blobs  */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.25;
+      transition: all 1s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Blobs -->
+  <div class="blob" style="width:500px;height:500px;background:#c8b6a6;top:-150px;left:-100px;"></div>
+  <div class="blob" style="width:400px;height:400px;background:#bfa38f;bottom:-100px;right:-50px;"></div>
+  <div class="blob" style="width:300px;height:300px;background:#e7d8c9;top:40%;left:35%;opacity:0.15;"></div>
+
+  <!-- Layout root -->
+  <div style="display:flex;height:100vh;position:relative;z-index:1;">
+    <aside id="sidebar">
+      <!-- Logo -->
+      <div style="padding:18px 14px 11px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#fbbf24,#fcd34d);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(251,191,36,0.5);flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="#fafaf9" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <div style="font-weight:800;font-size:15px;letter-spacing:-0.3px;" class="glow">EventPulse</div>
+            <div style="font-size:10px;color: #78716c;margin-top:1px;">AI Feedback Lab</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav items -->
+      <div style="flex:1;overflow-y:auto;padding:10px 9px;">
+        <div style="font-size:9.5px;font-weight:700;color: #78716c;letter-spacing:1.3px;text-transform:uppercase;padding:0 5px;margin-bottom:5px;">Main</div>
+
+        <div class="ni active" id="ni-dashboard" onclick="go('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Dashboard
+        </div>
+        <div class="ni" id="ni-events" onclick="go('events')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Events
+          <span class="badge" id="events-badge">— </span>
+        </div>
+        <div class="ni" id="ni-reports" onclick="go('reports')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Reports
+        </div>
+        <div class="ni" id="ni-attendees" onclick="go('attendees')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Attendees
+        </div>
+        <div class="ni" id="ni-qr-attendance" onclick="go('qr-attendance')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 16h-3a2 2 0 00-2 2v3"/></svg>
+          QR Attendance
+          <span class="badge" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);color:#fbbf24;">New</span>
+        </div>
+
+        <div style="font-size:9.5px;font-weight:700;color: #78716c;letter-spacing:1.3px;text-transform:uppercase;padding:0 5px;margin:13px 0 5px;">Insights</div>
+
+        <div class="ni" id="ni-ai" onclick="go('ai')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          AI Insights
+          <span class="badge" style="background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.4);color:#34d399;">New</span>
+        </div>
+        <div class="ni" id="ni-analytics" onclick="go('analytics')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+          Analytics
+        </div>
+        <div class="ni" id="ni-settings" onclick="go('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Settings
+        </div>
+      </div>
+
+      <!-- User -->
+      <div style="padding:10px 9px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div class="g1" style="border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;">
+          <div id="org-initial" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7c5a3c,#d97706);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">?</div>
+          <div style="flex:1;min-width:0;">
+            <div id="org-name" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading…</div>
+            <div id="org-email" style="font-size:10px;color: #9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          </div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#34d399;flex-shrink:0;" class="ldot"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  MAIN AREA ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+
+      <!-- Topbar -->
+      <header class="g1" style="border-radius:0;border-left:none;border-top:none;border-right:none;padding:11px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:5;">
+        <div style="display:flex;flex-direction:column;min-width:0;">
+          <h1 id="ptitle" style="font-size:16px;font-weight:700;line-height:1.2;" class="glow">Dashboard</h1>
+          <span id="psub" style="font-size:11px;color: #9ca3af;margin-top:1px;white-space:nowrap;">Overview of your EventPulse workspace</span>
+        </div>
+        <div style="flex:1;max-width:360px;margin-left:auto;position:relative;">
+          <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:0.35;" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" placeholder="Search…" class="g-inp" style="width:100%;padding:8px 12px 8px 35px;font-size:13px;" />
+        </div>
+        <button onclick="toggleNP()" style="position:relative;width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" class="bs">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span id="nbadge" style="position:absolute;top:-4px;right:-4px;width:17px;height:17px;background:#ef4444;border-radius:50%;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 9px rgba(239,68,68,0.5);">3</span>
+        </button>
+        <button onclick="toggleFs()" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" class="bs" title="Toggle Fullscreen">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m8 0h4v4M4 16v4h4m12-4v4h-4"/></svg>
+        </button>
+        <button class="bp" style="padding:8px 14px;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;" id="create-event-btn" onclick="openModal('create')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          New Event
+        </button>
+      </header>
+
+      <!-- Scrollable content -->
+      <main id="mc" style="flex:1;overflow-y:auto;padding:22px;">
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  DASHBOARD ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec on" id="s-dashboard">
+          <!-- 4 stat cards -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px;">
+
+            <div class="g2 sc">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                <div style="width:40px;height:40px;border-radius:11px;background:rgba(124, 90, 60, 0.1);border:1px solid rgba(124, 90, 60, 0.15);display:flex;align-items:center;justify-content:center;">
+                  <svg width="18" height="18" fill="none" stroke="#7c5a3c" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                </div>
+                <span style="font-size:10.5px;font-weight:600;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.22);color:#34d399;border-radius:99px;padding:2px 8px;">▲ 12%</span>
+              </div>
+              <div id="stat-responses" style="font-size:30px;font-weight:800;line-height:1;margin-bottom:3px;">— </div>
+              <div style="font-size:12px;color: #9ca3af;margin-bottom:12px;">Total Responses</div>
+              <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;"><div id="stat-responses-bar" class="ps" style="height:100%;width:0%;border-radius:99px;transition:width 0.8s ease;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color: #9ca3af;margin-top:5px;"><span id="stat-responses-pct">— </span><span id="stat-responses-goal">Goal: — </span></div>
+            </div>
+
+            <div class="g2 sc">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                <div style="width:40px;height:40px;border-radius:11px;background:rgba(124, 90, 60, 0.1);border:1px solid rgba(124, 90, 60, 0.15);display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" fill="#f9a8d4" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </div>
+                <span style="font-size:10.5px;font-weight:600;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.22);color:#34d399;border-radius:99px;padding:2px 8px;">▲ +0.3</span>
+              </div>
+              <div id="stat-rating" style="font-size:30px;font-weight:800;line-height:1;margin-bottom:3px;">— </div>
+              <div style="font-size:12px;color: #44403c;margin-bottom:12px;">Avg. Rating</div>
+              <div id="rating-stars" style="display:flex;gap:2px;margin-top:2px;"></div>
+            </div>
+
+            <div class="g2 sc">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                <div style="width:40px;height:40px;border-radius:11px;background:rgba(124, 90, 60, 0.1);border:1px solid rgba(124, 90, 60, 0.15);display:flex;align-items:center;justify-content:center;">
+                  <svg width="18" height="18" fill="none" stroke="#fcd34d" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10"/></svg>
+                </div>
+                <span style="font-size:10.5px;font-weight:600;background:rgba(239,68,68,0.13);border:1px solid rgba(239,68,68,0.22);color:#f87171;border-radius:99px;padding:2px 8px;">▼€ '5</span>
+              </div>
+              <div id="stat-nps" style="font-size:30px;font-weight:800;line-height:1;margin-bottom:3px;">— </div>
+              <div style="font-size:12px;color: #44403c;margin-bottom:12px;">NPS Score</div>
+              <div style="height:5px;border-radius:99px;overflow:hidden;position:relative;" class="nps-g">
+                <div id="nps-marker" style="position:absolute;top:0;bottom:0;left:0%;width:2px;background:rgba(255,255,255,0.95);border-radius:1px;transition:left 0.8s ease;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color: #44403c;margin-top:5px;"><span>0</span><span id="nps-gauge-val" style="color:#fbbf24;font-weight:600;">— </span><span>100</span></div>
+            </div>
+
+            <div class="g2 sc">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                <div style="width:40px;height:40px;border-radius:11px;background:rgba(52,211,153,0.13);border:1px solid rgba(52,211,153,0.22);display:flex;align-items:center;justify-content:center;">
+                  <svg width="18" height="18" fill="none" stroke="#34d399" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <span style="font-size:10.5px;font-weight:600;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.22);color:#34d399;border-radius:99px;padding:2px 8px;">▲ 8%</span>
+              </div>
+              <div id="stat-attendees" style="font-size:30px;font-weight:800;line-height:1;margin-bottom:3px;">— </div>
+              <div style="font-size:12px;color: #44403c;margin-bottom:12px;">Total Responses</div>
+              <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;"><div id="stat-attendees-bar" style="height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#34d399,#10b981);transition:width 0.8s ease;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color: #44403c;margin-top:5px;"><span id="stat-attendees-pct">— </span><span id="stat-attendees-cap">— </span></div>
+            </div>
+
+          </div>
+
+          <!-- AI Summary + Chart -->
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.65fr);gap:14px;margin-bottom:20px;">
+
+            <!-- AI Summary card -->
+            <div class="g2" style="border-radius:14px;padding:20px;position:relative;overflow:hidden;">
+              <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:rgba(251,191,36,0.12);border-radius:50%;filter:blur(36px);pointer-events:none;"></div>
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px;">
+                <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#fbbf24,#fcd34d);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(251,191,36,0.42);flex-shrink:0;">
+                  <svg width="16" height="16" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:700;font-size:13px;">✨ AI Summary</div>
+                  <div style="font-size:10px;color: #44403c;">Powered by EventPulse AI</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:#34d399;background:rgba(52,211,153,0.09);border:1px solid rgba(52,211,153,0.2);border-radius:99px;padding:3px 8px;white-space:nowrap;">
+                  <div style="width:5px;height:5px;border-radius:50%;background:#34d399;" class="ldot"></div>Live
+                </div>
+              </div>
+              <div id="ai-summary-bullets" style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;">
+                <div style="color: #44403c;font-size:12px;">Loading AI insights…</div>
+              </div>
+              <!-- Sentiment mini-bar -->
+              <div id="ai-sentiment-mini" style="margin-bottom:14px;"></div>
+              <button class="bp" style="width:100%;padding:10px;display:flex;align-items:center;justify-content:center;gap:5px;" onclick="go('ai')">
+                <svg width="13" height="13" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+                View AI Insights
+              </button>
+            </div>
+
+            <!-- Chart -->
+            <div class="g2" style="border-radius:14px;padding:20px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;">Response Trends</div>
+                  <div style="font-size:11px;color: #44403c;margin-top:2px;">Last 7 days · Daily</div>
+                </div>
+                <div style="display:flex;gap:4px;">
+                  <button style="padding:4px 10px;border-radius:7px;font-size:11px;font-weight:600;background:rgba(251,191,36,0.22);border:1px solid rgba(251,191,36,0.38);color:#fbbf24;cursor:pointer;">7D</button>
+                  <button class="bs" style="padding:4px 10px;">30D</button>
+                  <button class="bs" style="padding:4px 10px;">90D</button>
+                </div>
+              </div>
+              <div id="chart-bars" style="display:flex;align-items:flex-end;gap:7px;height:110px;">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="52" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Mon</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="78" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Tue</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="61" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Wed</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="93" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Thu</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="80" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Fri</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="100" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Sat</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="70" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">Sun</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.05);">
+                <div style="width:9px;height:9px;border-radius:2px;background:linear-gradient(135deg,#fbbf24,#d97706);"></div>
+                <span style="font-size:10.5px;color: #44403c;">Response Volume</span>
+                <span id="chart-peak-day" style="margin-left:auto;font-size:10.5px;color: #44403c;">Peak: — </span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Recent Events table -->
+          <div class="g2" style="border-radius:14px;overflow:hidden;">
+            <div style="padding:15px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
+              <div>
+                <div style="font-weight:700;font-size:13px;">Recent Events</div>
+                <div style="font-size:11px;color: #44403c;margin-top:1px;">Latest activity across your workspace</div>
+              </div>
+              <button class="bs" style="padding:6px 13px;" onclick="go('events')">View All ▲'</button>
+            </div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <th style="padding:9px 18px;text-align:left;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Event</th>
+                  <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Responses</th>
+                  <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Rating</th>
+                  <th style="padding:9px 18px;text-align:right;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="re-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  EVENTS ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec" id="s-events">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">Events</h2>
+              <p>Manage and track all your events</p>
+            </div>
+            <button class="bp" style="padding:9px 16px;display:flex;align-items:center;gap:5px;flex-shrink:0;" onclick="openModal('create')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>Create Event
+            </button>
+          </div>
+          <div style="display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap;">
+            <button id="fe-all"       onclick="fev('all')"       style="padding:5px 13px;border-radius:7px;font-size:12px;font-weight:600;background:rgba(251,191,36,0.22);border:1px solid rgba(251,191,36,0.38);color:#fbbf24;cursor:pointer;">All</button>
+            <button id="fe-live"      onclick="fev('live')"      class="bs" style="padding:5px 13px;">Live</button>
+            <button id="fe-completed" onclick="fev('completed')" class="bs" style="padding:5px 13px;">Completed</button>
+            <button id="fe-upcoming"  onclick="fev('upcoming')"  class="bs" style="padding:5px 13px;">Upcoming</button>
+          </div>
+          <div id="ev-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
+        </div>
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  REPORTS ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec" id="s-reports">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">Reports</h2>
+              <p>AI-generated analytics and downloadable insights</p>
+            </div>
+            <button class="bp" style="padding:9px 16px;display:flex;align-items:center;gap:5px;flex-shrink:0;" onclick="downloadAll()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Export All
+            </button>
+          </div>
+          <div id="reports-mini-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;"></div>
+          <div id="rp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;"></div>
+        </div>
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  ATTENDEES ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec" id="s-attendees">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">Attendees</h2>
+              <p id="attendees-sub">Participants across all events</p>
+            </div>
+            <button class="bp" style="padding:9px 16px;display:flex;align-items:center;gap:5px;flex-shrink:0;" onclick="dlReport('Attendees',genAttCSV())">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Export CSV
+            </button>
+          </div>
+          <div style="display:flex;gap:9px;margin-bottom:15px;flex-wrap:wrap;">
+            <div style="position:relative;flex:1;min-width:180px;">
+              <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.35;" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input id="at-search" type="text" placeholder="Search by name or email…" class="g-inp" style="width:100%;padding:8px 12px 8px 32px;font-size:13px;" oninput="filterAtt()" />
+            </div>
+            <select id="at-ev" class="g-inp" style="padding:8px 13px;font-size:13px;cursor:pointer;" onchange="filterAtt()">
+              <option value="">All Events</option>
+            </select>
+            <select id="at-rt" class="g-inp" style="padding:8px 13px;font-size:13px;cursor:pointer;" onchange="filterAtt()">
+              <option value="">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4+ Stars</option>
+              <option value="3">3+ Stars</option>
+            </select>
+          </div>
+          <div class="g2" style="border-radius:14px;overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <th style="padding:11px 18px;text-align:left;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Name</th>
+                  <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Event</th>
+                  <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Rating</th>
+                  <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">NPS</th>
+                  <th style="padding:11px 18px;text-align:right;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Sentiment</th>
+                </tr>
+              </thead>
+              <tbody id="at-body"></tbody>
+            </table>
+            <div id="at-empty" style="display:none;padding:40px;text-align:center;font-size:13px;color: #44403c;">No attendees match your filters.</div>
+          </div>
+        </div>
+
+        <!-- ════════════ QR ATTENDANCE ════════════ -->
+        <div class="sec" id="s-qr-attendance">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">QR Attendance</h2>
+              <p>Track who attended your events via QR scan or manual entry</p>
+            </div>
+            <button class="bp" style="padding:9px 16px;display:flex;align-items:center;gap:5px;flex-shrink:0;" onclick="exportAttCSV()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Export CSV
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:flex-end;margin-bottom:18px;">
+            <div>
+              <label style="font-size:10px;font-weight:700;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Select Event</label>
+              <select id="qa-event-sel" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;cursor:pointer;" onchange="onQAEventChange()">
+                <option value="">-- Choose an event --</option>
+              </select>
+            </div>
+            <div id="qa-att-badge" style="display:none;">
+              <div id="qa-att-status" style="font-size:11px;font-weight:600;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);color:#34d399;border-radius:99px;padding:7px 14px;white-space:nowrap;">Enabled</div>
+            </div>
+          </div>
+          <div id="qa-no-event" style="text-align:center;padding:60px 20px;color: #44403c;font-size:13px;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Select an event above</div>
+            <div style="font-size:12px;">Events with attendance enabled will show a QR code and entry options.</div>
+          </div>
+          <div id="qa-disabled-msg" style="display:none;text-align:center;padding:60px 20px;">
+            <div class="g2" style="display:inline-block;border-radius:16px;padding:24px 32px;">
+              <div style="font-size:32px;margin-bottom:10px;">&#9888;&#65039;</div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:5px;">Attendance not enabled for this event</div>
+              <div style="font-size:12px;color: #44403c;margin-bottom:16px;">Edit the event to enable attendance tracking.</div>
+            </div>
+          </div>
+          <div id="qa-content" style="display:none;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px;">
+              <div class="g2" style="border-radius:14px;padding:22px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                  <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#fbbf24,#fcd34d);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="14" height="14" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/></svg>
+                  </div>
+                  <div><div style="font-weight:700;font-size:13px;">QR Code</div><div style="font-size:10px;color: #44403c;">Scan to mark attendance</div></div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+                  <div id="qa-qr-canvas" style="background:#fff;padding:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:150px;min-width:150px;"><div style="color:#999;font-size:12px;">Generating...</div></div>
+                  <div style="text-align:center;width:100%;">
+                    <div style="font-size:11px;color: #44403c;margin-bottom:7px;">Share this link</div>
+                    <div id="qa-att-link" style="font-size:10px;color:#7c5a3c;word-break:break-all;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:6px 10px;margin-bottom:8px;cursor:pointer;" onclick="copyQRLink()"></div>
+                    <button onclick="copyQRLink()" class="bs" style="padding:5px 14px;font-size:11px;border-radius:7px;">Copy Link</button>
+                  </div>
+                </div>
+              </div>
+              <div class="g2" style="border-radius:14px;padding:22px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                  <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="14" height="14" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
+                  </div>
+                  <div><div style="font-weight:700;font-size:13px;">Manual Entry</div><div style="font-size:10px;color: #44403c;">Add an attendee directly</div></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Full Name *</label><input id="qa-name" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="e.g. Rahul Sharma" /></div>
+                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Roll Number *</label><input id="qa-roll" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="e.g. CS2021001" oninput="this.value=this.value.toUpperCase()" /></div>
+                  <div id="qa-manual-err" style="display:none;font-size:11.5px;color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:7px 11px;"></div>
+                  <button class="bp" style="padding:10px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="addManualAttendee()" id="qa-add-btn">Add Attendee</button>
+                </div>
+              </div>
+            </div>
+            <div class="g2" style="border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div><div style="font-size:24px;font-weight:800;" id="qa-total">0</div><div style="font-size:10px;color: #44403c;">Total Attendees</div></div>
+              </div>
+              <div style="flex:1;"></div>
+              <input id="qa-search" class="g-inp" style="padding:7px 12px;font-size:12px;min-width:180px;" placeholder="Search name or roll..." oninput="filterQATable()" />
+            </div>
+            <div class="g2" style="border-radius:14px;overflow:hidden;">
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <th style="padding:10px 18px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">#</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Name</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Roll No.</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Time</th>
+                    <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Method</th>
+                    <th style="padding:10px 18px;text-align:right;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Remove</th>
+                  </tr>
+                </thead>
+                <tbody id="qa-tbody"></tbody>
+              </table>
+              <div id="qa-empty" style="text-align:center;padding:40px;font-size:13px;color: #44403c;">No attendees yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  AI INSIGHTS ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec" id="s-ai">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">✨ AI Insights</h2>
+              <p id="ai-date-sub">Machine-generated analysis across all events</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#34d399;background:rgba(52,211,153,0.09);border:1px solid rgba(52,211,153,0.2);border-radius:99px;padding:5px 12px;white-space:nowrap;flex-shrink:0;">
+              <div style="width:6px;height:6px;border-radius:50%;background:#34d399;" class="ldot"></div>AI Engine Active
+            </div>
+          </div>
+
+          
+
+          <!-- Main row: sentiment engine + action items -->
+          <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,0.9fr);gap:14px;margin-bottom:14px;">
+            <!-- Sentiment Engine -->
+            <div class="g2 ai-card">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#fbbf24,#fcd34d);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="14" height="14" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:700;font-size:13px;">Sentiment Engine</div>
+                  <div style="font-size:10px;color: #44403c;">Per-event breakdown</div>
+                </div>
+              </div>
+              <div id="ai-sentiment-engine"><div style="color: #44403c;font-size:13px;">Loading…</div></div>
+            </div>
+            <!-- AI Action Items -->
+            <div class="g2 ai-card">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#d97706,#fbbf24);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="14" height="14" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:700;font-size:13px;">AI Action Items</div>
+                  <div style="font-size:10px;color: #44403c;">Recommendations to improve</div>
+                </div>
+              </div>
+              <div id="ai-action-items"><div style="color: #44403c;font-size:13px;">Loading…</div></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  ANALYTICS ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec" id="s-analytics">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">Analytics</h2>
+              <p>Deep-dive performance metrics · 2026</p>
+            </div>
+          </div>
+
+          <div id="analytics-content"></div>
+        </div>
+
+        <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  SETTINGS ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+        <div class="sec" id="s-settings">
+          <div class="ph">
+            <div class="ph-left">
+              <h2 class="glow">Settings</h2>
+              <p>Configure your workspace preferences</p>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;">
+            <div class="g2" style="border-radius:14px;padding:20px;">
+              <div style="font-weight:700;font-size:13px;margin-bottom:16px;">Profile</div>
+              <div style="display:flex;flex-direction:column;gap:13px;">
+                <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Full Name</label><input id="sett-name" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="Your name"/></div>
+                <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Email</label><input id="sett-email" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="your@email.com"/></div>
+                <button class="bp" style="padding:10px;" onclick="toast('✓ Profile saved!','success')">Save Changes</button>
+              </div>
+            </div>
+            <div class="g2" style="border-radius:14px;padding:20px;">
+              <div style="font-weight:700;font-size:13px;margin-bottom:16px;">Notification Preferences</div>
+              <div style="display:flex;flex-direction:column;gap:13px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:500;">Email alerts</div><div style="font-size:10.5px;color: #44403c;">Report completions &amp; summaries</div></div><div onclick="tswitch(this)" data-on="1" style="width:40px;height:22px;border-radius:99px;background:rgba(251,191,36,0.65);border:1px solid rgba(251,191,36,0.45);cursor:pointer;position:relative;transition:all 0.22s;"><div style="position:absolute;top:3px;left:calc(100% - 18px);width:14px;height:14px;border-radius:50%;background:#fff;transition:left 0.22s cubic-bezier(0.34,1.56,0.64,1);"></div></div></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:500;">Live response ping</div><div style="font-size:10.5px;color: #44403c;">Notify on response spikes</div></div><div onclick="tswitch(this)" data-on="1" style="width:40px;height:22px;border-radius:99px;background:rgba(251,191,36,0.65);border:1px solid rgba(251,191,36,0.45);cursor:pointer;position:relative;transition:all 0.22s;"><div style="position:absolute;top:3px;left:calc(100% - 18px);width:14px;height:14px;border-radius:50%;background:#fff;transition:left 0.22s cubic-bezier(0.34,1.56,0.64,1);"></div></div></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:500;">Weekly digest</div><div style="font-size:10.5px;color: #44403c;">Summary every Monday</div></div><div onclick="tswitch(this)" data-on="0" style="width:40px;height:22px;border-radius:99px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);cursor:pointer;position:relative;transition:all 0.22s;"><div style="position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;opacity:0.5;transition:left 0.22s cubic-bezier(0.34,1.56,0.64,1);"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  NOTIFICATION PANEL ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+  <div id="np">
+    <div style="padding:16px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-weight:700;font-size:14px;">Notifications</div>
+      <button onclick="toggleNP()" class="bs" style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="nl" style="padding:10px;overflow-y:auto;height:calc(100% - 112px);display:flex;flex-direction:column;gap:7px;"></div>
+    <div style="padding:10px;border-top:1px solid rgba(0,0,0,0.05);">
+      <button class="bs" style="width:100%;border-radius:8px;padding:8px;font-size:12px;" onclick="addNotif()">+ Simulate notification</button>
+    </div>
+  </div>
+
+  <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  MODAL ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+  <div id="mo" onclick="moClick(event)">
+    <div id="mb">
+      <div style="padding:20px 20px 0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <h3 id="mtitle" style="font-size:16px;font-weight:700;" class="glow">Create Event</h3>
+          <button onclick="closeMo()" class="bs" style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="mbody" style="display:flex;flex-direction:column;gap:13px;"></div>
+      </div>
+      <div style="padding:16px 20px;display:flex;gap:9px;border-top:1px solid rgba(0,0,0,0.05);margin-top:18px;">
+        <button onclick="closeMo()" class="bs" style="flex:1;padding:10px;border-radius:8px;">Cancel</button>
+        <button id="mok" class="bp" style="flex:1;padding:10px;border-radius:8px;">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  TOASTS ══════════ ══════════ ══════════ ══════════ ══════════ ══════════  -->
+  <div id="ta"></div>
+
+  <script>
+    // ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ 
+    // EventPulse Dashboard —  Fully Dynamic API-Driven Script
+    // All data fetched from /api/* —  NO hardcoded values below
+    // ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ 
+
+    //  API LAYER 
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:5000' : window.location.origin;
+
+    const getToken = () => localStorage.getItem('ep_token');
+
+    async function apiFetch(path, options = {}) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const headers = { ...(options.headers || {}) };
+      const tok = getToken();
+      if (tok) headers['Authorization'] = `Bearer ${tok}`;
+      try {
+        const res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal: ctrl.signal });
+        clearTimeout(t);
+        if (res.status === 401) { window.location.href = '/login.html'; throw new Error('Session expired'); }
+        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || `HTTP ${res.status}`); }
+        return res.json();
+      } catch (e) { clearTimeout(t); if (e.name === 'AbortError') throw new Error('Request timed out'); throw e; }
+    }
+
+    //  LIVE STATE (replaces all static arrays) 
+    let EVENTS_DATA   = [];   // from /api/dashboard
+    let FEEDBACK_DATA = [];   // from /api/history  (used as "attendees")
+    let DASH_STATS    = { totalResponses: 0, avgRating: 0, avgNPS: 0, avgContent: 0 };
+    let AI_DATA       = null; // from /api/ai/summary
+    let RATING_DIST   = [];   // from dashboard payload
+    let CAT_DIST      = [];   // from dashboard payload
+    let curFev = 'all';
+    let npOpen = false, extraI = 0;
+    const EVENT_COLORS = ['#fbbf24','#d97706','#fcd34d','#7c5a3c','#34d399','#f59e0b','#06b6d4'];
+    const EXTRA_N = [
+      { type:'success', icon:'📊', title:'AI Analysis Done',  body:'Sentiment analysis updated for your events.',      time:'just now' },
+      { type:'info',    icon:'', title:'New Feedback',      body:'New responses received for your event.',           time:'just now' },
+      { type:'success', icon:'🎯', title:'Milestone Reached', body:'Your event crossed a feedback milestone!',         time:'just now' },
+    ];
+
+    //  HELPERS 
+    const escH = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const fmtD = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : 'TBD';
+
+    function evStatus(ev) {
+      const d = ev.date ? new Date(ev.date) : null;
+      const now = new Date();
+      if (!d) return 'upcoming';
+      const diff = (d - now) / 864e5;
+      return diff < -1 ? 'completed' : diff <= 1 ? 'live' : 'upcoming';
+    }
+    const STATUS_CFG = {
+      live:      { label:'Live',      bg:'rgba(59,130,246,0.12)', bdr:'rgba(59,130,246,0.28)', clr:'#93c5fd', dot:'#3b82f6' },
+      completed: { label:'Completed', bg:'rgba(52,211,153,0.1)',  bdr:'rgba(52,211,153,0.28)', clr:'#6ee7b7', dot:'#34d399' },
+      upcoming:  { label:'Upcoming',  bg:'rgba(245,158,11,0.1)',  bdr:'rgba(245,158,11,0.28)', clr:'#fcd34d', dot:'#f59e0b' },
+    };
+
+    function animCount(el, target, dur=1100, suffix='', dec=0) {
+      if (!el) return;
+      const start = Date.now(), from = parseFloat(el.textContent.replace(/[^0-9.]/g,'')) || 0;
+      (function tick() {
+        const p = Math.min((Date.now()-start)/dur, 1), e = 1-Math.pow(2,-10*p);
+        const v = from + (target-from)*e;
+        el.textContent = dec > 0 ? v.toFixed(dec)+suffix : Math.floor(v).toLocaleString()+suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      })();
+    }
+
+    //  PAGE META 
+    const META = {
+      dashboard: ['Dashboard',   'Overview of your EventPulse workspace'],
+      events:    ['Events',      'Manage and track all your events'],
+      reports:   ['Reports',     'AI-generated analytics and downloadable insights'],
+      attendees: ['Attendees',   'Participants across all events'],
+      ai:        ['AI Insights', 'Machine-generated analysis across all events'],
+      analytics:        ['Analytics',       'Deep-dive performance metrics'],
+      'qr-attendance':  ['QR Attendance',   'Track event attendance with QR codes and manual entry'],
+      settings:  ['Settings',    'Configure your workspace preferences'],
+    };
+
+    //  NAVIGATION 
+    let cur = 'dashboard';
+    function go(id) {
+      if (cur === id) return;
+      cur = id;
+      document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+      document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+      const sec = document.getElementById('s-' + id);
+      if (sec) sec.classList.add('on');
+      const ni = document.getElementById('ni-' + id);
+      if (ni) ni.classList.add('active');
+      const m = META[id] || [id, ''];
+      document.getElementById('ptitle').textContent = m[0];
+      document.getElementById('psub').textContent = m[1];
+      document.getElementById('mc').scrollTop = 0;
+      if (id === 'dashboard') animBars();
+      if (id === 'events')    renderEvents();
+      if (id === 'reports')   renderReports();
+      if (id === 'attendees') { renderAtt(FEEDBACK_DATA); buildAttFilter(); }
+      if (id === 'ai')        renderAI();
+      if (id === 'analytics')    renderAnalytics();
+      if (id === 'qr-attendance') renderQRAttendance();
+    }
+
+    //  STATUS CONFIG 
+    function sConf(s) { return STATUS_CFG[s] || STATUS_CFG.upcoming; }
+
+    //  MAIN DATA LOAD 
+    async function loadAll() {
+      try {
+        // Show dash skeleton
+        ['stat-responses','stat-rating','stat-nps','stat-attendees'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.textContent = '…'; el.style.opacity = '0.4'; }
+        });
+
+        const [dashRes, histRes, aiRes] = await Promise.all([
+          apiFetch('/api/dashboard'),
+          apiFetch('/api/history?limit=200'),
+          apiFetch('/api/ai/summary').catch(() => ({ data: null })),
+        ]);
+
+        const dash = dashRes.data || {};
+        DASH_STATS    = dash.stats || { totalResponses:0, avgRating:0, avgNPS:0, avgContent:0 };
+        RATING_DIST   = dash.ratingDistribution || [];
+        CAT_DIST      = dash.categoryDistribution || [];
+        EVENTS_DATA   = (dash.events || []).map((ev, i) => ({
+          ...ev,
+          status: evStatus(ev),
+          color: EVENT_COLORS[i % EVENT_COLORS.length],
+        }));
+        FEEDBACK_DATA = histRes.data?.feedbacks || [];
+        AI_DATA       = aiRes.data || null;
+
+        updateStatCards();
+        updateAISummaryCard();
+        updateResponseChart();
+        renderRecent();
+        renderReports();
+        renderAI();
+        buildAttFilter();
+        updateEventsBadge();
+        loadOrganizerInfo();
+        renderNotifs();
+        animBars();
+
+      } catch (e) {
+        console.error('Dashboard load error:', e);
+        toast('Failed to load dashboard: ' + e.message, 'error');
+        ['stat-responses','stat-rating','stat-nps','stat-attendees'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.textContent = '— '; el.style.opacity = '1'; }
+        });
+      }
+    }
+
+    //  HELPER FUNCTIONS (Restored)
+    function buildAttFilter() {
+      const sel = document.getElementById('at-ev');
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All Events</option>' + EVENTS_DATA.map(e => 
+        `<option value="${e._id}" ${e._id===cur?'selected':''}>${escH(e.name)}</option>`
+      ).join('');
+    }
+
+    function dlReport(name, content) {
+      const blob = new Blob([content], { type: 'text/csv' });
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = name + '.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    async function dlEvReport(id) {
+      try {
+        const res = await apiFetch(`/api/history?eventId=${id}&limit=1000`);
+        const list = res.data?.feedbacks || [];
+        const ev = EVENTS_DATA.find(e => e._id === id);
+        const csv = 'Email,Rating,NPS,Sentiment,Date\n' + list.map(a => 
+          `${a.email || ''},${a.rating || 0},${a.nps || 0},${a.sentiment || ''},${fmtD(a.createdAt)}`
+        ).join('\n');
+        dlReport('Report_' + escH(ev?.name || id).replace(/ /g, '_'), csv);
+        toast('Report downloaded!', 'success');
+      } catch (e) { toast('Download failed', 'error'); }
+    }
+
+    async function cpEvReport(id) {
+      try {
+        const res = await apiFetch(`/api/history?eventId=${id}&limit=1000`);
+        const list = res.data?.feedbacks || [];
+        const csv = 'Email,Rating,NPS,Sentiment,Date\n' + list.map(a => 
+          `${a.email || ''},${a.rating || 0},${a.nps || 0},${a.sentiment || ''},${fmtD(a.createdAt)}`
+        ).join('\n');
+        navigator.clipboard.writeText(csv).then(() => toast('Copied to clipboard!', 'success'));
+      } catch (e) { toast('Copy failed', 'error'); }
+    }
+
+    function downloadAll() {
+      const csv = 'Event,Date,Responses,Rating,NPS\n' + EVENTS_DATA.map(ev => 
+        `"${ev.name}","${fmtD(ev.date)}",${ev.responseCount || 0},${ev.avgRating || 0},${ev.avgNPS || 0}`
+      ).join('\n');
+      dlReport('All_Events_Summary', csv);
+      toast('All data exported!', 'success');
+    }
+
+    function logout() {
+      localStorage.removeItem('ep_token');
+      localStorage.removeItem('ep_organizer');
+      window.location.href = 'login.html';
+    }
+
+    //  STAT CARDS 
+    function updateStatCards() {
+      const total = DASH_STATS.totalResponses || 0;
+      const avgR  = parseFloat(DASH_STATS.avgRating || 0);
+      const nps   = parseFloat(DASH_STATS.avgNPS    || 0);
+      const goal  = Math.max(total * 2, 1000);
+      const pct   = Math.min(100, Math.round((total / goal) * 100));
+
+      const el = id => document.getElementById(id);
+
+      // Responses
+      if (el('stat-responses')) { el('stat-responses').style.opacity='1'; animCount(el('stat-responses'), total); }
+      if (el('stat-responses-bar')) el('stat-responses-bar').style.width = pct + '%';
+      if (el('stat-responses-pct')) el('stat-responses-pct').textContent = pct + '% of goal';
+      if (el('stat-responses-goal')) el('stat-responses-goal').textContent = 'Goal: ' + goal.toLocaleString();
+
+      // Avg Rating
+      if (el('stat-rating')) {
+        el('stat-rating').style.opacity = '1';
+        el('stat-rating').textContent = total > 0 ? avgR.toFixed(1) + ' / 5' : '— ';
+      }
+      // Stars
+      const starsEl = el('rating-stars');
+      if (starsEl && total > 0) {
+        const full = Math.floor(avgR);
+        starsEl.innerHTML = [1,2,3,4,5].map(i =>
+          `<svg width="14" height="14" fill="${i<=full ? '#fbbf24' : 'rgba(255,255,255,0.12)'}" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`
+        ).join('');
+      }
+
+      // NPS
+      if (el('stat-nps')) { el('stat-nps').style.opacity='1'; if (total > 0) animCount(el('stat-nps'), Math.round(nps)); else el('stat-nps').textContent = '— '; }
+      if (el('nps-marker')) el('nps-marker').style.left = Math.max(0, Math.min(100, nps)) + '%';
+      if (el('nps-gauge-val')) el('nps-gauge-val').textContent = total > 0 ? Math.round(nps) : '— ';
+
+      // Attendees card (shows total responses)
+      if (el('stat-attendees')) { el('stat-attendees').style.opacity='1'; animCount(el('stat-attendees'), total); }
+      if (el('stat-attendees-bar')) el('stat-attendees-bar').style.width = pct + '%';
+      if (el('stat-attendees-pct')) el('stat-attendees-pct').textContent = pct + '% collected';
+      if (el('stat-attendees-cap')) el('stat-attendees-cap').textContent = 'Goal: ' + goal.toLocaleString();
+
+      // Events badge
+      updateEventsBadge();
+    }
+
+    function updateEventsBadge() {
+      const b = document.getElementById('events-badge');
+      if (b) b.textContent = EVENTS_DATA.length || 0;
+    }
+
+    //  AI SUMMARY CARD (overview section) 
+    function updateAISummaryCard() {
+      const bulletsEl = document.getElementById('ai-summary-bullets');
+      const miniEl    = document.getElementById('ai-sentiment-mini');
+      const ai = AI_DATA;
+      if (bulletsEl) {
+        if (!ai || !ai.summary) {
+          bulletsEl.innerHTML = `<div style="color: #44403c;font-size:12px;line-height:1.6;">No AI data yet —  collect feedback from your events to see insights here.</div>`;
+        } else {
+          const sent   = ai.sentimentDistribution || [];
+          const pos    = sent.find(s => s.label==='positive')?.percent || 0;
+          const sugg   = (ai.topSuggestions || [])[0]?.word || null;
+          const kw     = (ai.keywords || [])[0]?.keyword || null;
+          bulletsEl.innerHTML = `
+            <div style="display:flex;gap:8px;align-items:flex-start;">
+              <div style="width:16px;height:16px;border-radius:50%;background:rgba(251,191,36,0.18);border:1px solid rgba(251,191,36,0.38);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><svg width="9" height="9" fill="none" stroke="#7c5a3c" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+              <p style="font-size:12.5px;color: #44403c;line-height:1.5;">Satisfaction <span style="color:#fbbf24;font-weight:600;">${pos >= 70 ? 'trending up' : 'needs attention'}</span> —  ${pos}% positive responses.</p>
+            </div>
+            ${sugg ? `<div style="display:flex;gap:8px;align-items:flex-start;"><div style="width:16px;height:16px;border-radius:50%;background:rgba(245,158,11,0.13);border:1px solid rgba(245,158,11,0.32);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><svg width="9" height="9" fill="none" stroke="#fbbf24" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01"/></svg></div><p style="font-size:12.5px;color: #44403c;line-height:1.5;"><span style="color:#fbbf24;font-weight:600;">"${escH(sugg)}"</span> cited as top improvement area.</p></div>` : ''}
+            ${kw ? `<div style="display:flex;gap:8px;align-items:flex-start;"><div style="width:16px;height:16px;border-radius:50%;background:rgba(52,211,153,0.13);border:1px solid rgba(52,211,153,0.32);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><svg width="9" height="9" fill="none" stroke="#34d399" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg></div><p style="font-size:12.5px;color: #44403c;line-height:1.5;">Top keyword: <span style="color:#34d399;font-weight:600;">"${escH(kw)}"</span> from attendee feedback.</p></div>` : ''}`;
+        }
+      }
+      if (miniEl) {
+        const sent = AI_DATA?.sentimentDistribution || [];
+        const pos  = sent.find(s=>s.label==='positive')?.percent || 0;
+        const neu  = sent.find(s=>s.label==='neutral')?.percent  || 0;
+        const neg  = 100 - pos - neu;
+        miniEl.innerHTML = `
+          <div style="display:flex;justify-content:space-between;font-size:10px;color: #44403c;margin-bottom:5px;"><span>Sentiment</span><span style="color:#34d399;">${pos}% Positive</span></div>
+          <div style="display:flex;height:5px;border-radius:99px;overflow:hidden;gap:2px;">
+            <div style="background:#10b981;border-radius:99px;width:${pos}%;"></div>
+            <div style="background:#f59e0b;border-radius:99px;width:${neu}%;"></div>
+            <div style="background:#ef4444;border-radius:99px;width:${Math.max(0,neg)}%;"></div>
+          </div>`;
+      }
+    }
+
+    //  RESPONSE TREND CHART (last 7 days) 
+    function updateResponseChart() {
+      const container = document.getElementById('chart-bars');
+      if (!container) return;
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const counts = [0,0,0,0,0,0,0];
+      const now = new Date();
+      FEEDBACK_DATA.forEach(f => {
+        const d = new Date(f.createdAt);
+        const diff = Math.floor((now - d) / 864e5);
+        if (diff < 7) {
+          const idx = d.getDay(); // 0=Sun
+          counts[idx === 0 ? 6 : idx - 1]++;
+        }
+      });
+      const max = Math.max(...counts, 1);
+      const peakIdx = counts.indexOf(Math.max(...counts));
+      container.innerHTML = days.map((day, i) => {
+        const h = Math.round((counts[i] / max) * 100);
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;"><div class="cb bar-anim" data-h="${h}" style="width:100%;height:0;"></div><span style="font-size:9.5px;color: #44403c;">${day}</span></div>`;
+      }).join('');
+      const peakEl = document.getElementById('chart-peak-day');
+      if (peakEl) peakEl.textContent = 'Peak: ' + days[peakIdx];
+      setTimeout(() => animBars(), 300);
+    }
+
+    //  EVENTS SECTION 
+    function evCard(ev, colorIdx) {
+      const st  = ev.status || 'upcoming';
+      const sc  = sConf(st);
+      const clr = ev.color || EVENT_COLORS[colorIdx % EVENT_COLORS.length];
+      const resp   = ev.responseCount || 0;
+      const rating = ev.avgRating ? parseFloat(ev.avgRating).toFixed(1) : null;
+      const pulse  = st === 'live' ? 'class="ldot"' : '';
+      return `<div class="g2 ec" onclick="evDetail('${ev._id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:13px;">
+          <div style="width:38px;height:38px;border-radius:10px;background:${clr}22;border:1px solid ${clr}40;display:flex;align-items:center;justify-content:center;">
+            <svg width="16" height="16" fill="none" stroke="${clr}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <span style="font-size:10.5px;font-weight:600;background:${sc.bg};border:1px solid ${sc.bdr};color:${sc.clr};border-radius:99px;padding:3px 9px;display:flex;align-items:center;gap:4px;">
+            <span style="width:5px;height:5px;border-radius:50%;background:${sc.dot};" ${pulse}></span>${sc.label}
+          </span>
+        </div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${escH(ev.name)}</div>
+        <div style="font-size:11px;color: #44403c;margin-bottom:14px;">${fmtD(ev.date)} · ${escH(ev.category||'Event')}</div>
+        <div style="display:flex;gap:16px;border-top:1px solid rgba(0,0,0,0.05);padding-top:13px;align-items:center;">
+          <div><div style="font-size:17px;font-weight:700;">${resp > 0 ? resp.toLocaleString() : '— '}</div><div style="font-size:10px;color: #44403c;">Responses</div></div>
+          <div><div style="font-size:17px;font-weight:700;color:#fbbf24;">${rating || '— '}</div><div style="font-size:10px;color: #44403c;">Rating</div></div>
+          <span class="bs" style="margin-left:auto;padding:5px 11px;font-size:11px;border-radius:7px;">Details ▲</span>
+        </div>
+      </div>`;
+    }
+
+    function fev(f) {
+      curFev = f;
+      ['all','live','completed','upcoming'].forEach(x => {
+        const b = document.getElementById('fe-'+x); if (!b) return;
+        if (x===f) { b.style.background='rgba(251,191,36,0.22)'; b.style.border='1px solid rgba(251,191,36,0.38)'; b.style.color='#fbbf24'; b.className=''; }
+        else { b.style.background=''; b.style.border='1px solid rgba(255,255,255,0.1)'; b.style.color=''; b.className='bs'; }
+      });
+      renderEvents();
+    }
+
+    function renderEvents() {
+      const g = document.getElementById('ev-grid'); if (!g) return;
+      const list = EVENTS_DATA.filter(e => curFev==='all' || e.status===curFev);
+      if (!list.length) {
+        g.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color: #44403c;">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 16px;opacity:0.35;display:block;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;">No ${curFev==='all'?'':curFev+' '}events yet</div>
+          <div style="font-size:12px;">Create your first event to get started.</div></div>`;
+        return;
+      }
+      g.innerHTML = list.map((ev, i) => evCard(ev, i)).join('');
+    }
+
+    //  RECENT EVENTS TABLE 
+    function renderRecent() {
+      const tbody = document.getElementById('re-body'); if (!tbody) return;
+      if (!EVENTS_DATA.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="padding:30px;text-align:center;color: #44403c;font-size:13px;">No events yet. Create one to see activity here.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = EVENTS_DATA.slice(0,4).map(ev => {
+        const sc   = sConf(ev.status);
+        const resp = ev.responseCount || 0;
+        const rat  = ev.avgRating ? parseFloat(ev.avgRating).toFixed(1) : '— ';
+        return `<tr class="tr" style="border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" onclick="go('events')">
+          <td style="padding:11px 18px;"><div style="font-size:13px;font-weight:600;">${escH(ev.name)}</div><div style="font-size:10.5px;color: #44403c;margin-top:1px;">${fmtD(ev.date)} · ${escH(ev.category||'')}</div></td>
+          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:600;">${resp > 0 ? resp.toLocaleString() : '— '}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:600;color:#fbbf24;">${rat}</td>
+          <td style="padding:11px 18px;text-align:right;"><span style="font-size:10.5px;font-weight:600;background:${sc.bg};border:1px solid ${sc.bdr};color:${sc.clr};border-radius:99px;padding:3px 9px;">${sc.label}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    //  REPORTS SECTION 
+    function renderReports() {
+      const mini = document.getElementById('reports-mini-stats');
+      const grid = document.getElementById('rp-grid');
+      if (mini) {
+        const t  = DASH_STATS.totalResponses || 0;
+        const ar = parseFloat(DASH_STATS.avgRating || 0);
+        const an = Math.round(DASH_STATS.avgNPS || 0);
+        mini.innerHTML = `
+          <div class="g2" style="border-radius:12px;padding:16px;text-align:center;"><div style="font-size:26px;font-weight:800;color:#fbbf24;margin-bottom:3px;">${EVENTS_DATA.length}</div><div style="font-size:11px;color: #44403c;">Events</div></div>
+          <div class="g2" style="border-radius:12px;padding:16px;text-align:center;"><div style="font-size:26px;font-weight:800;color:#34d399;margin-bottom:3px;">${an > 0 ? an : '— '}</div><div style="font-size:11px;color: #44403c;">NPS Score</div></div>
+          <div class="g2" style="border-radius:12px;padding:16px;text-align:center;"><div style="font-size:26px;font-weight:800;color:#fbbf24;margin-bottom:3px;">${t > 999 ? (t/1000).toFixed(1)+'k' : t}</div><div style="font-size:11px;color: #44403c;">Responses</div></div>
+          <div class="g2" style="border-radius:12px;padding:16px;text-align:center;"><div style="font-size:26px;font-weight:800;color:#f9a8d4;margin-bottom:3px;">${ar > 0 ? ar.toFixed(1) : '— '}</div><div style="font-size:11px;color: #44403c;">Avg Rating</div></div>`;
+      }
+      if (!grid) return;
+      if (!EVENTS_DATA.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color: #44403c;font-size:13px;">No events yet. Create events and collect feedback to generate reports.</div>`;
+        return;
+      }
+      grid.innerHTML = EVENTS_DATA.map(ev => {
+        const resp   = ev.responseCount || 0;
+        const rating = ev.avgRating ? parseFloat(ev.avgRating).toFixed(1) : '— ';
+        const nps    = ev.avgNPS ? Math.round(ev.avgNPS) : '— ';
+        return `<div class="g2 rc">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px;">
+            <div><div style="font-weight:700;font-size:13.5px;margin-bottom:3px;">${escH(ev.name)}</div><div style="font-size:10.5px;color: #44403c;">Date: ${fmtD(ev.date)}</div></div>
+            <div style="width:32px;height:32px;border-radius:9px;background:rgba(251,191,36,0.14);border:1px solid rgba(251,191,36,0.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="14" height="14" fill="none" stroke="#7c5a3c" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;">${resp > 0 ? resp.toLocaleString() : '— '}</div><div style="font-size:10px;color: #44403c;margin-top:2px;">Responses</div></div>
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#34d399;">${nps}</div><div style="font-size:10px;color: #44403c;margin-top:2px;">NPS</div></div>
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#fbbf24;">${rating}</div><div style="font-size:10px;color: #44403c;margin-top:2px;">Avg Rating</div></div>
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#fbbf24;">${escH(ev.category||'— ')}</div><div style="font-size:10px;color: #44403c;">Category</div></div>
+          </div>
+          <div style="display:flex;gap:7px;">
+            <button class="bp" style="flex:1;padding:8px;font-size:11.5px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:8px;" onclick="dlEvReport('${ev._id}')">
+              <svg width="12" height="12" fill="none" stroke="#fafaf9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download
+            </button>
+            <button class="bs" style="flex:1;padding:8px;font-size:11.5px;display:flex;align-items:center;justify-content:center;gap:4px;" onclick="cpEvReport('${ev._id}')">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Copy
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    //  ATTENDEES 
+    function renderAtt(list) {
+      const tbody = document.getElementById('at-body'); if (!tbody) return;
+      const empty = document.getElementById('at-empty');
+      if (!list.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = list.map(a => {
+        const rating = a.rating || 0;
+        const sent   = a.sentiment || 'neutral';
+        const sentCap = sent.charAt(0).toUpperCase()+sent.slice(1);
+        const sc = {Positive:{c:'#34d399',bg:'rgba(52,211,153,0.1)',bdr:'rgba(52,211,153,0.2)'},Neutral:{c:'#fbbf24',bg:'rgba(124, 90, 60, 0.1)',bdr:'rgba(124, 90, 60, 0.2)'},Negative:{c:'#f87171',bg:'rgba(239,68,68,0.1)',bdr:'rgba(239,68,68,0.2)'}}[sentCap]||{};
+        const stars = [1,2,3,4,5].map(i=>`<svg width="12" height="12" fill="${i<=rating?'#fbbf24':'rgba(0,0,0,0.1)'}" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`).join('');
+        const name = escH(a.email || 'Anonymous');
+        const init = (a.email||'?')[0].toUpperCase();
+        return `<tr class="atr" style="border-bottom:1px solid rgba(0,0,0,0.05);">
+          <td style="padding:11px 18px;"><div style="display:flex;align-items:center;gap:9px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5a3c,#fbbf24);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;">${init}</div><div><div style="font-size:13px;font-weight:700;color: #1c1917;">${name}</div><div style="font-size:10.5px;color: #44403c;">${fmtD(a.createdAt)}</div></div></div></td>
+          <td style="padding:11px 14px;font-size:12.5px;color: #44403c;">${escH(a.eventName||'— ')}</td>
+          <td style="padding:11px 14px;text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:1px;">${stars}</div></td>
+          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:#fbbf24;">${a.nps||'— '}</td>
+          <td style="padding:11px 18px;text-align:right;"><span style="font-size:10.5px;font-weight:700;background:${sc.bg};border:1px solid ${sc.bdr};color:${sc.c};border-radius:99px;padding:3px 9px;">${sentCap}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterAtt() {
+      const q  = (document.getElementById('at-search')?.value||'').toLowerCase();
+      const ev = document.getElementById('at-ev')?.value || '';
+      const rt = parseInt(document.getElementById('at-rt')?.value)||0;
+      renderAtt(FEEDBACK_DATA.filter(a =>
+        (!q || (a.email||'').toLowerCase().includes(q) || (a.eventName||'').toLowerCase().includes(q)) &&
+        (!ev || (a.eventId?.toString() === ev)) &&
+        (!rt || (a.rating||0) >= rt)
+      ));
+    }
+
+    function genAttCSV() {
+      return 'Email,Event,Rating,NPS,Sentiment,Date\n'+FEEDBACK_DATA.map(a=>`${a.email||''},${a.eventName||''},${a.rating||0},${a.nps||0},${a.sentiment||''},${fmtD(a.createdAt)}`).join('\n');
+    }
+
+    //  AI INSIGHTS 
+    function renderAI() {
+      const ai = AI_DATA; if (!ai) return;
+      const sent = ai.sentimentDistribution || [];
+      const kws = ai.keywords || [];
+      const sugg = ai.topSuggestions || [];
+      const pos = sent.find(s=>s.label==='positive')?.percent||0;
+      const neu = sent.find(s=>s.label==='neutral')?.percent||0;
+      const neg = 100 - pos - neu;
+
+      const sub = document.getElementById('ai-date-sub');
+      if (sub) sub.textContent = `Analysis verified as of ${new Date().toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'})}`;
+
+      const scoreCards = document.getElementById('ai-score-cards');
+      if (scoreCards) scoreCards.innerHTML = `
+        <div class="g2 ai-card" style="text-align:center;padding:18px 14px;">
+          <div style="font-size:28px;font-weight:800;color:#7c5a3c;margin-bottom:4px;">${pos > 0 ? pos+'%' : '— '}</div>
+          <div style="font-size:12px;font-weight:700;">Satisfaction Score</div>
+          <div style="font-size:10px;color: #44403c;">Real-time Sentiment</div>
+        </div>
+        <div class="g2 ai-card" style="text-align:center;padding:18px 14px;">
+          <div style="font-size:28px;font-weight:800;color:#34d399;margin-bottom:4px;">${DASH_STATS.avgRating > 0 ? parseFloat(DASH_STATS.avgRating).toFixed(1) : '— '}</div>
+          <div style="font-size:12px;font-weight:700;">Quality Score</div>
+          <div style="font-size:10px;color: #44403c;">Customer Rating / 5</div>
+        </div>
+        <div class="g2 ai-card" style="text-align:center;padding:18px 14px;">
+          <div style="font-size:28px;font-weight:800;color:#fbbf24;margin-bottom:4px;">${DASH_STATS.avgNPS > 0 ? Math.round(DASH_STATS.avgNPS) : '— '}</div>
+          <div style="font-size:12px;font-weight:700;">NPS Score</div>
+          <div style="font-size:10px;color: #44403c;">Net Promoter Score</div>
+        </div>
+        <div class="g2 ai-card" style="text-align:center;padding:18px 14px;">
+          <div style="font-size:28px;font-weight:800;color:#d97706;margin-bottom:4px;">${kws[0]?.count || '— '}</div>
+          <div style="font-size:12px;font-weight:700;">Top Keyword</div>
+          <div style="font-size:10px;color: #44403c;">${kws[0] ? '"'+escH(kws[0].keyword)+'"' : 'No data'}</div>
+        </div>`;
+
+      const seEl = document.getElementById('ai-sentiment-engine');
+      if (seEl) {
+        const activeEvs = EVENTS_DATA.filter(ev => (ev.responseCount||0) > 0);
+        const kwTags = kws.slice(0,5).map(k =>
+          `<span style="font-size:11px;background:rgba(124, 90, 60, 0.1);border:1px solid rgba(124, 90, 60, 0.2);color:#7c5a3c;border-radius:99px;padding:3px 10px;">#${escH(k.keyword.replace(/\s+/g,'-'))}</span>`
+        ).join('');
+        seEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:13px;">
+          ${activeEvs.length ? activeEvs.slice(0,3).map(ev => {
+            const send = ev.sentimentDistribution || [];
+            const p = send.find(s=>s.label==='positive')?.percent || 0;
+            const n = send.find(s=>s.label==='neutral')?.percent || 0;
+            const ng = 100 - p - n;
+            const clr = p >= 80 ? '#34d399' : p >= 60 ? '#fbbf24' : '#f87171';
+            return `<div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color: #1c1917;font-weight:600;">${escH(ev.name)}</span><span style="color:${clr};font-weight:700;">${p}% Positive</span></div>
+              <div style="display:flex;height:5px;border-radius:99px;overflow:hidden;gap:2px;">
+                <div style="background:#34d399;border-radius:99px;width:${p}%;"></div>
+                <div style="background:#fbbf24;border-radius:99px;width:${n}%;"></div>
+                <div style="background:#f87171;border-radius:99px;width:${ng}%;"></div>
+              </div>
+            </div>`;
+          }).join('') : '<div style="color: #44403c;font-size:13px;text-align:center;padding:20px 0;">No active feedback trends.</div>'}
+        </div>
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.05);">
+          <div style="font-size:11px;font-weight:700;color: #1c1917;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Keyword Insights</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">${kwTags || '<span style="color: #44403c;font-size:12px;">No keywords detected.</span>'}</div>
+        </div>`;
+      }
+
+      const aiEl = document.getElementById('ai-action-items');
+      if (aiEl) {
+        if (!sugg.length) {
+          aiEl.innerHTML = `<div style="color: #44403c;font-size:13px;text-align:center;padding:30px 0;">Awaiting more data for AI recommendations.</div>`;
+        } else {
+          const colors = [
+            {bg:'rgba(52,211,153,0.1)',bdr:'rgba(52,211,153,0.3)',s:'#34d399'},
+            {bg:'rgba(124, 90, 60, 0.1)',bdr:'rgba(124, 90, 60, 0.3)',s:'#7c5a3c'},
+            {bg:'rgba(251,191,36,0.1)',bdr:'rgba(251,191,36,0.3)',s:'#fbbf24'},
+            {bg:'rgba(248,113,113,0.1)',bdr:'rgba(248,113,113,0.3)',s:'#f87171'}
+          ];
+          aiEl.innerHTML = sugg.slice(0,4).map((s,i) => {
+            const c = colors[i%colors.length];
+            return `<div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:white;border:1px solid rgba(124,90,60,0.1);border-radius:12px;">
+              <div style="width:32px;height:32px;border-radius:9px;background:${c.bg};border:1px solid ${c.bdr};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+                <svg width="14" height="14" fill="none" stroke="${c.s}" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#1c1917;margin-bottom:3px;">${escH(s.word)}</div>
+                <div style="font-size:11.5px;color: #44403c;line-height:1.4;">Reported ${s.count} time${s.count!==1?'s':''}. Prioritize addressing this topic for your next event.</div>
+              </div>
+            </div>`;
+          }).join('');
+        }
+      }
+    }
+
+    // ANALYTICS 
+    async function renderAnalytics() {
+      const cont = document.getElementById('analytics-content'); if (!cont) return;
+      cont.innerHTML = `<div style="text-align:center;padding:40px;color: #44403c;font-size:13px;">Loading Analytics Engine…</div>`;
+      try {
+        const [catRes, ratRes] = await Promise.all([
+          apiFetch('/api/analytics/categories'),
+          apiFetch('/api/analytics/ratings'),
+        ]);
+        const cats   = catRes.data || [];
+        const ratings = ratRes.data || [];
+        const total  = ratings.reduce((s,r)=>s+r.count,0);
+        const maxCat = cats[0]?.count || 1;
+        const catColors = ['#7c5a3c','#fbbf24','#d97706','#bfa38f','#c8b6a6','#6b4f35'];
+        const rColors2  = {5:'#7c5a3c',4:'#fbbf24',3:'#fcd34d',2:'#f87171',1:'#ef4444'};
+        const maxResp   = Math.max(...EVENTS_DATA.map(e=>e.responseCount||0), 1);
+
+        cont.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px;">
+            <div class="g2" style="border-radius:14px;padding:20px;">
+              <div style="font-weight:700;font-size:13px;margin-bottom:16px;">Engagement by Category</div>
+              <div style="display:flex;flex-direction:column;gap:11px;">
+                ${cats.length ? cats.slice(0,6).map((c,i)=>`<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color: #1c1917;font-weight:600;">${escH(c.category)}</span><span style="color:#7c5a3c;font-weight:800;">${c.count}</span></div><div style="height:4px;background:rgba(0,0,0,0.05);border-radius:99px;"><div style="height:100%;width:${Math.round((c.count/maxCat)*100)}%;background:${catColors[i%catColors.length]};border-radius:99px;"></div></div></div>`).join('') : '<div style="color: #44403c;font-size:12px;">No category engagement data.</div>'}
+              </div>
+            </div>
+            <div class="g2" style="border-radius:14px;padding:20px;">
+              <div style="font-weight:700;font-size:13px;margin-bottom:16px;">Rating Breakdown</div>
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                ${[5,4,3,2,1].map(r=>{const f=ratings.find(x=>x.rating===r);const p=f&&total>0?Math.round((f.count/total)*100):0;return `<div style="display:flex;align-items:center;gap:9px;font-size:12px;"><span style="width:16px;color: #44403c;font-weight:600;">${r}★</span><div style="flex:1;height:6px;background:rgba(0,0,0,0.04);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${p}%;background:${rColors2[r]};border-radius:99px;"></div></div><span style="color: #44403c;width:28px;text-align:right;font-weight:600;">${p}%</span></div>`;}).join('')}
+              </div>
+            </div>
+            <div class="g2" style="border-radius:14px;padding:20px;">
+              <div style="font-weight:700;font-size:13px;margin-bottom:16px;">SaaS Performance</div>
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color: #44403c;">Total Responses</span><span style="font-size:18px;font-weight:800;color:#7c5a3c;">${total.toLocaleString()}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color: #44403c;">Average Rating</span><span style="font-size:18px;font-weight:800;color:#7c5a3c;">${(total>0?DASH_STATS.avgRating:0).toFixed(2)}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color: #44403c;">Net Promoter</span><span style="font-size:18px;font-weight:800;color:#34d399;">${Math.round(DASH_STATS.avgNPS||0)}</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="g2" style="border-radius:14px;padding:20px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:20px;">Event Scaling Analysis</div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:120px;">
+              ${EVENTS_DATA.slice(0,10).map(ev=>{const p=Math.round(((ev.responseCount||0)/maxResp)*100);return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;"><div style="width:100%;height:${p}%;background:linear-gradient(to top,#7c5a3c,#fbbf24);border-radius:4px 4px 0 0;min-height:2px;"></div><span style="font-size:9px;color: #44403c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-weight:600;">${escH(ev.name.split(' ')[0])}</span></div>`;}).join('')}
+            </div>
+          </div>`;
+      } catch (e) { console.error(e); cont.innerHTML = `<div style="color: #f87171;padding:40px;text-align:center;font-weight:600;">Failed to synchronize analytics engine.</div>`; }
+    }
+
+    //  ORGANIZER 
+    function loadOrganizerInfo() {
+      try {
+        const raw = localStorage.getItem('ep_organizer'); if (!raw) return;
+        const org = JSON.parse(raw);
+        const name  = org.name || org.organizerName || 'Organizer';
+        const email = org.email || org.organizerEmail || '';
+        const el = id => document.getElementById(id);
+        if (el('org-name')) el('org-name').textContent = name;
+        if (el('org-email')) el('org-email').textContent = email;
+        if (el('org-initial')) el('org-initial').textContent = name[0]?.toUpperCase() || 'O';
+        if (el('sett-name')) el('sett-name').value = name;
+        if (el('sett-email')) el('sett-email').value = email;
+      } catch (_) {}
+    }
+
+    //  MODAL 
+    function openModal(type, data) {
+      const ti = document.getElementById('mtitle');
+      const bd = document.getElementById('mbody');
+      const ok = document.getElementById('mok');
+      ti.textContent = ''; bd.innerHTML = ''; ok.textContent = 'Ok'; ok.disabled = false;
+      moAction = null;
+
+      if (type === 'create') {
+        ti.textContent = 'Create New Event'; ok.textContent = 'Create Event';
+        bd.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">EVENT NAME</label><input id="m-name" class="g-inp" style="width:100%;padding:10px;" placeholder="e.g. Q2 Product Launch" /></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">DATE</label><input id="m-date" type="date" class="g-inp" style="width:100%;padding:10px;" /></div>
+              <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">CATEGORY</label><select id="m-cat" class="g-inp" style="width:100%;padding:10px;"><option>Workshop</option><option>Seminar</option><option>Conference</option><option>Webinar</option><option>Hackathon</option><option>Cultural</option><option>Sports</option><option>Other</option></select></div>
+            </div>
+            <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">VENUE / LINK</label><input id="m-loc" class="g-inp" style="width:100%;padding:10px;" placeholder="e.g. Grand Ballroom" /></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;"><input type="checkbox" id="m-att" style="width:14px;height:14px;accent-color:#7c5a3c;" checked /><label for="m-att" style="font-size:12px;color: #44403c;font-weight:600;cursor:pointer;">Enable Attendance Tracking</label></div>
+          </div>`;
+        moAction = async () => {
+          const nm = document.getElementById('m-name')?.value.trim() || '';
+          const dt = document.getElementById('m-date')?.value || '';
+          const cat= document.getElementById('m-cat')?.value || 'Other';
+          const loc= document.getElementById('m-loc')?.value.trim() || '';
+          const desc= document.getElementById('m-desc')?.value.trim() || '';
+          if (!nm) { toast('Event name is required','error'); return; }
+          if (!dt) { toast('Event date is required','error'); return; }
+          try {
+            ok.textContent = 'Creating…'; ok.disabled = true;
+            await apiFetch('/api/events', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ name:nm, date:dt, category:cat, venue:loc, description:desc, enableAttendance: document.getElementById('m-att')?.checked || false }),
+            });
+            closeMo(); toast('🎯 Event created!','success');
+            await loadAll();
+          } catch(e) { toast('Failed: '+e.message,'error'); ok.textContent='Create Event'; ok.disabled=false; }
+        };
+      } else if (type === 'detail' && data) {
+        const ev = data; const sc = sConf(ev.status);
+        const resp   = ev.responseCount || 0;
+        const rating = ev.avgRating ? parseFloat(ev.avgRating).toFixed(1) : '— ';
+        ti.textContent = ev.name; ok.textContent = '📥 Download Report';
+        bd.innerHTML = `
+          <div style="display:flex;gap:10px;background:rgba(255,255,255,0.035);border-radius:99px;padding:12px 14px;flex-wrap:wrap;">
+            <span style="font-size:12px;color: #44403c;">🗓 ${fmtD(ev.date)}</span>
+            <span style="font-size:12px;color: #44403c;">${escH(ev.category||'')}</span>
+            <span style="margin-left:auto;font-size:10.5px;font-weight:600;background:${sc.bg};border:1px solid ${sc.bdr};color:${sc.clr};border-radius:99px;padding:3px 9px;">${sc.label}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;">${resp > 0 ? resp.toLocaleString() : '— '}</div><div style="font-size:10px;color: #44403c;margin-top:2px;">Responses</div></div>
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#fbbf24;">${rating}</div><div style="font-size:10px;color: #44403c;margin-top:2px;">Avg Rating</div></div>
+            <div style="background:rgba(255,255,255,0.035);border-radius:9px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#fbbf24;">${ev.avgNPS ? Math.round(ev.avgNPS) : '— '}</div><div style="font-size:10px;color: #44403c;margin-top:2px;">NPS</div></div>
+          </div>`;
+        moAction = () => { dlEvReport(ev._id); closeMo(); };
+      }
+      document.getElementById('mo').classList.add('open');
+    }
+    function evDetail(id) { const ev = EVENTS_DATA.find(e=>e._id===id||e.id===id); if (ev) openModal('detail',ev); }
+    function closeMo() { document.getElementById('mo').classList.remove('open'); }
+    function moClick(e) { if (e.target===document.getElementById('mo')) closeMo(); }
+    document.getElementById('mok').addEventListener('click', ()=>{ if(moAction) moAction(); });
+
+    //  NOTIFICATIONS 
+    function toggleNP() { npOpen=!npOpen; document.getElementById('np').classList.toggle('open',npOpen); }
+    function mkNotif(n) {
+      const cfg = {success:{bdr:'rgba(52,211,153,0.18)',bg:'rgba(52,211,153,0.06)'},warning:{bdr:'rgba(245,158,11,0.18)',bg:'rgba(245,158,11,0.06)'},error:{bdr:'rgba(239,68,68,0.18)',bg:'rgba(239,68,68,0.06)'},info:{bdr:'rgba(251,191,36,0.18)',bg:'rgba(251,191,36,0.06)'}}[n.type]||{};
+      const d = document.createElement('div');
+      d.className = 'g2'; d.style.cssText = `border-radius:10px;padding:11px 13px;border:1px solid ${cfg.bdr};background:${cfg.bg};transition:transform 0.18s;`;
+      d.innerHTML = `<div style="display:flex;gap:9px;align-items:flex-start;"><div style="font-size:16px;flex-shrink:0;margin-top:1px;">${n.icon}</div><div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;">${n.title}</div><div style="font-size:11px;color: #44403c;margin-top:2px;line-height:1.4;">${n.body}</div><div style="font-size:9.5px;color: #44403c;margin-top:4px;">${n.time}</div></div><button onclick="this.closest('.g2').remove();updBadge();" style="color:rgba(255,255,255,0.18);font-size:15px;line-height:1;cursor:pointer;background:none;border:none;flex-shrink:0;" onmouseover="this.style.color='rgba(255,255,255,0.55)'" onmouseout="this.style.color='rgba(255,255,255,0.18)'"></button></div>`;
+      d.addEventListener('mouseenter',()=>d.style.transform='translateX(-2px)');
+      d.addEventListener('mouseleave',()=>d.style.transform='');
+      return d;
+    }
+    function renderNotifs() {
+      const l = document.getElementById('nl'); l.innerHTML = '';
+      const notifs = [];
+      if (DASH_STATS.totalResponses > 0)  notifs.push({type:'success',icon:'✓',title:'Feedback Active',body:`${DASH_STATS.totalResponses} responses across ${EVENTS_DATA.length} event${EVENTS_DATA.length!==1?'s':''}.`,time:'Live'});
+      if (EVENTS_DATA.some(e=>e.status==='live')) notifs.push({type:'info',icon:'',title:'Live Events',body:`${EVENTS_DATA.filter(e=>e.status==='live').length} event(s) are live right now.`,time:'Now'});
+      if (!EVENTS_DATA.length) notifs.push({type:'warning',icon:'⚠️',title:'No Events Yet',body:'Create your first event to start collecting feedback.',time:'Setup'});
+      if (!notifs.length)     notifs.push({type:'success',icon:'📊',title:'All Caught Up',body:'Dashboard is up to date.',time:'now'});
+      notifs.forEach(n=>l.appendChild(mkNotif(n)));
+      updBadge();
+    }
+    function updBadge() {
+      const c = document.querySelectorAll('#nl .g2').length;
+      const b = document.getElementById('nbadge');
+      b.textContent = c; b.style.display = c ? 'flex' : 'none';
+    }
+    function addNotif() {
+      const n = EXTRA_N[extraI++%EXTRA_N.length]; const el = mkNotif(n);
+      el.style.cssText += ';opacity:0;transform:translateX(36px);';
+      document.getElementById('nl').prepend(el);
+      requestAnimationFrame(()=>{ el.style.transition='all 0.3s cubic-bezier(0.16,1,0.3,1)'; el.style.opacity='1'; el.style.transform='translateX(0)'; });
+      updBadge(); toast('New notification received!','success');
+    }
+
+    //  TOAST 
+    function toast(msg, type='success') {
+      const c = {success:{bg:'rgba(20,58,44,0.88)',bdr:'rgba(52,211,153,0.35)',ic:'✓'},warning:{bg:'rgba(62,44,8,0.88)',bdr:'rgba(245,158,11,0.35)',ic:'⚠️'},error:{bg:'rgba(60,14,14,0.88)',bdr:'rgba(239,68,68,0.35)',ic:''},info:{bg:'rgba(22,14,60,0.88)',bdr:'rgba(251,191,36,0.35)',ic:'ℹ️'}}[type]||{};
+      const t = document.createElement('div'); t.className='toast';
+      t.style.cssText += `background:${c.bg};border:1px solid ${c.bdr};`;
+      t.innerHTML = `<span>${c.ic}</span><span>${msg}</span>`;
+      document.getElementById('ta').appendChild(t);
+      requestAnimationFrame(()=>t.classList.add('show'));
+      setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),350); },3500);
+    }
+
+    //  ANIMATIONS 
+    function animBars() {
+      setTimeout(()=>{ document.querySelectorAll('.bar-anim').forEach((b,i)=>{ setTimeout(()=>{ b.style.height=b.dataset.h+'%'; },i*65); }); },250);
+    }
+
+    //  SETTINGS TOGGLE 
+    function tswitch(el) {
+      const on = el.dataset.on==='1'; el.dataset.on=on?'0':'1';
+      const th = el.querySelector('div');
+      if(on) { el.style.background='rgba(255,255,255,0.08)'; el.style.borderColor='rgba(255,255,255,0.12)'; th.style.left='3px'; th.style.opacity='0.5'; }
+      else   { el.style.background='rgba(251,191,36,0.65)';  el.style.borderColor='rgba(251,191,36,0.45)'; th.style.left='calc(100% - 18px)'; th.style.opacity='1'; }
+    }
+
+    //  FULLSCREEN 
+    function toggleFs() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(e => toast('Fullscreen failed','error'));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    //  AUTO-REFRESH (30s) 
+    let refreshTimer = null;
+    function startAutoRefresh() {
+      if (refreshTimer) return;
+      refreshTimer = setInterval(async () => {
+        if (document.visibilityState !== 'visible') return;
+        try {
+          const r = await apiFetch('/api/dashboard');
+          DASH_STATS  = r.data?.stats || DASH_STATS;
+          EVENTS_DATA = (r.data?.events||[]).map((ev,i)=>({...ev,status:evStatus(ev),color:EVENT_COLORS[i%EVENT_COLORS.length]}));
+          updateStatCards();
+        } catch(_) {}
+      }, 30000);
+    }
+
+    //  ESC KEY 
+    document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeMo(); if(npOpen) toggleNP(); } });
+
+
+    //  QR ATTENDANCE MODULE 
+    const QR_LIB = 'https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js';
+    let QR_LOADED = false;
+    let QA_CURRENT_EVENT = null;
+
+    function loadQRLib(cb) {
+      if (QR_LOADED) { cb(); return; }
+      const s = document.createElement('script');
+      s.src = QR_LIB;
+      s.onload = () => { QR_LOADED = true; cb(); };
+      document.head.appendChild(s);
+    }
+
+    function renderQRAttendance() {
+      const sel = document.getElementById('qa-event-sel');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Choose an event --</option>';
+      EVENTS_DATA.forEach(ev => {
+        const opt = document.createElement('option');
+        opt.value = ev._id;
+        opt.textContent = ev.name + (ev.enableAttendance ? ' [Attendance On]' : '');
+        sel.appendChild(opt);
+      });
+      // Reset to no event state
+      document.getElementById('qa-no-event').style.display = '';
+      document.getElementById('qa-disabled-msg').style.display = 'none';
+      document.getElementById('qa-content').style.display = 'none';
+      document.getElementById('qa-att-badge').style.display = 'none';
+    }
+
+    function onQAEventChange() {
+      const sel = document.getElementById('qa-event-sel');
+      const eventId = sel.value;
+      if (!eventId) {
+        document.getElementById('qa-no-event').style.display = '';
+        document.getElementById('qa-disabled-msg').style.display = 'none';
+        document.getElementById('qa-content').style.display = 'none';
+        document.getElementById('qa-att-badge').style.display = 'none';
+        QA_CURRENT_EVENT = null;
+        return;
+      }
+      const ev = EVENTS_DATA.find(e => e._id === eventId);
+      QA_CURRENT_EVENT = ev;
+      document.getElementById('qa-no-event').style.display = 'none';
+      if (!ev || !ev.enableAttendance) {
+        document.getElementById('qa-disabled-msg').style.display = '';
+        document.getElementById('qa-content').style.display = 'none';
+        document.getElementById('qa-att-badge').style.display = 'none';
+        return;
+      }
+      // Show content
+      document.getElementById('qa-disabled-msg').style.display = 'none';
+      document.getElementById('qa-content').style.display = '';
+      document.getElementById('qa-att-badge').style.display = '';
+      // Generate QR
+      const attURL = window.location.origin + '/attendance.html?eventId=' + eventId;
+      document.getElementById('qa-att-link').textContent = attURL;
+      const qrBox = document.getElementById('qa-qr-canvas');
+      qrBox.innerHTML = '<div style="color:#999;font-size:12px;">Generating...</div>';
+      loadQRLib(() => {
+        qrBox.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        qrBox.appendChild(canvas);
+        QRCode.toCanvas(canvas, attURL, { width: 140, margin: 1 }, err => {
+          if (err) qrBox.innerHTML = '<div style="color:#f87171;font-size:11px;">QR failed</div>';
+        });
+      });
+      // Load attendees from backend
+      loadQAAttendees(eventId);
+    }
+
+    async function loadQAAttendees(eventId) {
+      document.getElementById('qa-total').textContent = '...';
+      try {
+        const res = await apiFetch('/api/attendance/' + eventId);
+        const list = res.data?.attendees || [];
+        renderQATable(list);
+      } catch(e) {
+        // Fall back to localStorage
+        const stored = getLocalAtt(eventId);
+        renderQATable(stored);
+      }
+    }
+
+    function getLocalAtt(eventId) {
+      try { return JSON.parse(localStorage.getItem('att_list_' + eventId) || '[]'); } catch(_) { return []; }
+    }
+
+    function saveLocalAtt(eventId, list) {
+      localStorage.setItem('att_list_' + eventId, JSON.stringify(list));
+    }
+
+    function renderQATable(list) {
+      const q = document.getElementById('qa-search')?.value?.toLowerCase() || '';
+      const filtered = q ? list.filter(a => a.name.toLowerCase().includes(q) || a.rollNo.toLowerCase().includes(q)) : list;
+      const tbody = document.getElementById('qa-tbody');
+      const empty = document.getElementById('qa-empty');
+      document.getElementById('qa-total').textContent = list.length;
+      if (!filtered.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+      empty.style.display = 'none';
+      tbody.innerHTML = filtered.map((a, i) => {
+        const t = a.markedAt ? new Date(a.markedAt).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) : '—';
+        const d = a.markedAt ? new Date(a.markedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '';
+        const method = a.method === 'manual' ? '<span style="font-size:10px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;border-radius:99px;padding:2px 8px;">Manual</span>' : '<span style="font-size:10px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#7c5a3c;border-radius:99px;padding:2px 8px;">QR</span>';
+        return `<tr class="tr" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:10px 18px;font-size:12px;color: #44403c;">${i+1}</td>
+          <td style="padding:10px 14px;"><div style="font-size:13px;font-weight:600;">${escH(a.name)}</div></td>
+          <td style="padding:10px 14px;font-size:12px;font-weight:600;color:#fbbf24;">${escH(a.rollNo)}</td>
+          <td style="padding:10px 14px;font-size:11px;color: #44403c;">${t}<div style="font-size:10px;color: #44403c;">${d}</div></td>
+          <td style="padding:10px 14px;text-align:center;">${method}</td>
+          <td style="padding:10px 18px;text-align:right;"><button onclick="removeQAAttendee('${escH(a.rollNo)}')" style="font-size:11px;color:rgba(239,68,68,0.7);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;hover:background:rgba(239,68,68,0.1);">Remove</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterQATable() {
+      if (!QA_CURRENT_EVENT) return;
+      const eventId = QA_CURRENT_EVENT._id;
+      loadQAAttendees(eventId);
+    }
+
+    async function addManualAttendee() {
+      const name = document.getElementById('qa-name').value.trim();
+      const roll = document.getElementById('qa-roll').value.trim().toUpperCase();
+      const errEl = document.getElementById('qa-manual-err');
+      const btn = document.getElementById('qa-add-btn');
+      errEl.style.display = 'none';
+      if (!QA_CURRENT_EVENT) { toast('Select an event first', 'warning'); return; }
+      if (!name) { errEl.textContent = 'Please enter a full name.'; errEl.style.display = ''; return; }
+      if (!roll) { errEl.textContent = 'Please enter a roll number.'; errEl.style.display = ''; return; }
+
+      btn.disabled = true; btn.textContent = 'Adding...';
+
+      try {
+        const res = await apiFetch('/api/attendance', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ eventId: QA_CURRENT_EVENT._id, name, rollNo: roll, method: 'manual' }),
+        });
+        if (res.alreadyMarked || !res.success) throw new Error(res.message || 'Already marked');
+        toast('Attendee added!', 'success');
+        document.getElementById('qa-name').value = '';
+        document.getElementById('qa-roll').value = '';
+        await loadQAAttendees(QA_CURRENT_EVENT._id);
+      } catch(e) {
+        // Fallback: localStorage
+        const list = getLocalAtt(QA_CURRENT_EVENT._id);
+        if (list.some(a => a.rollNo === roll)) {
+          errEl.textContent = 'Roll number ' + roll + ' is already marked.';
+          errEl.style.display = '';
+        } else {
+          list.push({ name, rollNo: roll, markedAt: new Date().toISOString(), method: 'manual' });
+          saveLocalAtt(QA_CURRENT_EVENT._id, list);
+          renderQATable(list);
+          document.getElementById('qa-name').value = '';
+          document.getElementById('qa-roll').value = '';
+          toast('Attendee added (offline)', 'success');
+        }
+      } finally {
+        btn.disabled = false; btn.innerHTML = 'Add Attendee';
+      }
+    }
+
+    async function removeQAAttendee(rollNo) {
+      if (!QA_CURRENT_EVENT) return;
+      if (!confirm('Remove ' + rollNo + '?')) return;
+      try {
+        await apiFetch('/api/attendance/' + QA_CURRENT_EVENT._id + '/' + rollNo, { method: 'DELETE' });
+        await loadQAAttendees(QA_CURRENT_EVENT._id);
+        toast('Attendee removed', 'info');
+      } catch(e) {
+        // Fallback localStorage
+        const list = getLocalAtt(QA_CURRENT_EVENT._id).filter(a => a.rollNo !== rollNo);
+        saveLocalAtt(QA_CURRENT_EVENT._id, list);
+        renderQATable(list);
+        toast('Attendee removed (offline)', 'info');
+      }
+    }
+
+    function copyQRLink() {
+      const link = document.getElementById('qa-att-link').textContent;
+      navigator.clipboard.writeText(link).then(() => toast('Link copied!', 'success'));
+    }
+
+    function exportAttCSV() {
+      if (!QA_CURRENT_EVENT) { toast('Select an event first', 'warning'); return; }
+      const eventId = QA_CURRENT_EVENT._id;
+      // Try to get rows from DOM
+      const rows = document.querySelectorAll('#qa-tbody tr');
+      if (!rows.length) { toast('No attendees to export', 'warning'); return; }
+      let csv = 'No,Name,Roll No,Time,Method\n';
+      rows.forEach((row, i) => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 5) return;
+        const name   = cells[1].querySelector('div')?.textContent || '';
+        const roll   = cells[2].textContent.trim();
+        const time   = cells[3].textContent.trim().replace(/\n/g,' ');
+        const method = cells[4].textContent.trim();
+        csv += `${i+1},"${name}","${roll}","${time}","${method}"\n`;
+      });
+      dlReport('Attendance_' + escH(QA_CURRENT_EVENT.name).replace(/ /g,'_'), csv);
+      toast('Attendance exported!', 'success');
+    }
+
+
+    //  INIT 
+    (async function init() {
+      document.body.style.opacity = '0';
+      requestAnimationFrame(() => { document.body.style.transition='opacity 0.4s ease'; document.body.style.opacity='1'; });
+      if (!getToken()) { window.location.href = 'login.html'; return; }
+      await loadAll();
+      renderEvents();
+      startAutoRefresh();
+    })();
+  </script>
+</body>
+</html>

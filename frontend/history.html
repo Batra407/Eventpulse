@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — EventPulse</title>
+  <meta name="description" content="View all historical feedback across your events with search and pagination.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="bg-blob-wrap" aria-hidden="true">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+  </div>
+
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="navbar-logo" href="index.html" aria-label="EventPulse Home">
+      <div class="navbar-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      EventPulse
+    </a>
+
+    <div class="navbar-links">
+      <a href="index.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <a href="dashboard.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="reports.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Reports
+      </a>
+      <a href="history.html" class="active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </a>
+    </div>
+
+    <div class="navbar-auth" id="nav-auth-area"></div>
+
+    <button class="navbar-hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" data-action="toggle-mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="menu">
+    <a href="dashboard.html" role="menuitem">Dashboard</a>
+    <a href="reports.html" role="menuitem">Reports</a>
+    <a href="history.html" role="menuitem">History</a>
+    <a href="index.html" role="menuitem">Home</a>
+  </div>
+
+  <div class="page-wrap">
+    <div class="content">
+      <div class="container" style="padding-top: 32px; padding-bottom: 80px;">
+
+        <!-- Page Header -->
+        <div class="section-header" style="margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h1 style="font-size: 1.75rem; margin-bottom: 4px;">Feedback History</h1>
+            <p class="text-muted text-sm">All collected feedback across your events</p>
+          </div>
+
+          <!-- Search -->
+          <div class="search-wrap" style="width: 280px;" role="search">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              type="search"
+              class="search-input"
+              id="history-search"
+              placeholder="Search comments…"
+              aria-label="Search feedback history"
+              autocomplete="off"
+            >
+          </div>
+        </div>
+
+        <!-- History List -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <div id="history-grid" style="padding: 4px 0;">
+            <div style="padding: 20px; color: var(--text-3); font-size: 0.875rem;">Loading history…</div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <button class="btn btn-secondary btn-sm" id="history-prev" data-action="history-prev" aria-label="Previous page" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Previous
+          </button>
+          <span class="pagination-info" id="history-pagination-info" aria-live="polite"></span>
+          <button class="btn btn-secondary btn-sm" id="history-next" data-action="history-next" aria-label="Next page">
+            Next
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js?v=6"></script>
+</body>
+</html>

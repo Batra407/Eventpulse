@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — EventPulse</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    
+    /* ── Pastel Fluid Background ── */
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .bg-fluid-pastel {
+      background: radial-gradient(circle at 20% 30%, #bbf7d0, transparent 40%),
+                  radial-gradient(circle at 80% 20%, #fbcfe8, transparent 40%),
+                  radial-gradient(circle at 50% 80%, #fef3c7, transparent 40%);
+      background-color: #fafafa;
+      background-size: 200% 200%;
+      animation: gradientMove 15s ease infinite;
+    }
+  </style>
+  <script>tailwind.config = { theme: { extend: { fontFamily: { sans:['Inter','sans-serif'], display:['Sora','sans-serif'] } } } }</script>
+</head>
+<body class="antialiased bg-fluid-pastel min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <!-- Navbar -->
+  <nav class="bg-white/50 backdrop-blur-md border-b border-gray-100 flex-shrink-0 fixed top-0 w-full z-50 transition-all duration-300" id="main-nav" role="navigation" aria-label="Main navigation">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
+
+      <!-- Logo -->
+      <a href="index.html" class="flex items-center gap-2.5 flex-shrink-0" aria-label="EventPulse Home">
+        <div class="w-8 h-8 rounded-full bg-black flex items-center justify-center shadow-md">
+          <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <span class="text-black font-bold text-lg tracking-tight hidden sm:block">EventPulse</span>
+      </a>
+
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center gap-2 ml-4">
+        <a href="index.html" class="text-gray-600 hover:text-black font-semibold text-sm px-4 py-2 rounded-full hover:bg-white/40 transition duration-300 ease-in-out">Home</a>
+        <a href="about.html" class="text-gray-600 hover:text-black font-semibold text-sm px-4 py-2 rounded-full hover:bg-white/40 transition duration-300 ease-in-out">About</a>
+        <a href="pricing.html" class="text-black font-semibold text-sm px-4 py-2 rounded-full bg-white/40 shadow-sm transition duration-300 ease-in-out">Pricing</a>
+        <a href="contact.html" class="text-gray-600 hover:text-black font-semibold text-sm px-4 py-2 rounded-full hover:bg-white/40 transition duration-300 ease-in-out">Contact</a>
+      </div>
+
+      <!-- Auth buttons -->
+      <div class="hidden md:flex items-center gap-3 ml-auto" id="nav-auth-area">
+        <a href="login.html" class="border border-black px-5 py-2.5 rounded-full text-black text-sm font-semibold hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105 shadow-sm" id="cta-login-btn">Organizer Login</a>
+        <a href="register.html" class="bg-black text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-80 transition duration-300 ease-in-out hover:scale-105 shadow-md" id="cta-register-btn">Get Started</a>
+      </div>
+
+      <!-- Hamburger -->
+      <button class="md:hidden ml-auto text-black p-2 rounded-full hover:bg-black/5 transition duration-300" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" data-action="toggle-mobile-menu">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden border-t border-gray-100 bg-white/80 backdrop-blur-md">
+      <div class="px-5 py-5 space-y-2">
+        <a href="index.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">Home</a>
+        <a href="about.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">About</a>
+        <a href="pricing.html" class="block text-black font-semibold px-4 py-3 rounded-xl bg-white shadow-sm text-sm" role="menuitem">Pricing</a>
+        <a href="contact.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">Contact</a>
+        <hr class="border-gray-200 my-2">
+        <a href="login.html" class="block text-gray-900 border border-gray-300 font-semibold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Organizer Login</a>
+        <a href="register.html" class="block text-white bg-black font-bold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Get Started Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Pricing Content -->
+  <main class="flex-grow pt-32 pb-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h1 class="text-gray-900 font-display font-bold text-4xl lg:text-5xl mb-4">Simple, transparent pricing</h1>
+        <p class="text-gray-600 text-lg">No hidden fees. Choose the perfect plan for your academic events.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Free Plan -->
+        <div class="bg-white rounded-2xl shadow-md p-8 hover:-translate-y-2 transition duration-300 flex flex-col">
+          <h3 class="text-gray-900 font-bold text-xl mb-2">Free Plan</h3>
+          <p class="text-gray-500 text-sm mb-6 flex-grow">Perfect for small meetups.</p>
+          <div class="mb-6 mb-8">
+            <span class="text-4xl font-bold text-gray-900">$0</span>
+            <span class="text-gray-500 text-sm">/mo</span>
+          </div>
+          <ul class="text-gray-600 text-sm space-y-4 mb-8">
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Basic feedback collection</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Limited events (Up to 3)</li>
+            <li class="flex items-center gap-2 text-gray-400"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> No analytics</li>
+          </ul>
+          <a href="register.html" class="w-full bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition font-bold text-center mt-auto shadow-md">Get Started</a>
+        </div>
+
+        <!-- Pro Plan (Highlighted) -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 transform scale-100 hover:scale-105 md:scale-105 md:hover:scale-110 transition duration-300 border-2 border-purple-500 relative flex flex-col">
+          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
+          <h3 class="text-gray-900 font-bold text-xl mb-2">Pro Plan</h3>
+          <p class="text-gray-500 text-sm mb-6 flex-grow">For growing academic organizations.</p>
+          <div class="mb-6 mb-8">
+            <span class="text-4xl font-bold text-gray-900">$29</span>
+            <span class="text-gray-500 text-sm">/mo</span>
+          </div>
+          <ul class="text-gray-600 text-sm space-y-4 mb-8">
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited events</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> AI insights & summaries</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> QR Attendance system</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Export CSV reports</li>
+          </ul>
+          <a href="register.html" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-purple-500 hover:to-indigo-500 transition font-bold text-center mt-auto shadow-lg shadow-purple-500/30">Start Free Trial</a>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="bg-white rounded-2xl shadow-md p-8 hover:-translate-y-2 transition duration-300 flex flex-col">
+          <h3 class="text-gray-900 font-bold text-xl mb-2">Enterprise Plan</h3>
+          <p class="text-gray-500 text-sm mb-6 flex-grow">Customized solutions for universities.</p>
+          <div class="mb-6 mb-8">
+            <span class="text-4xl font-bold text-gray-900">Custom</span>
+          </div>
+          <ul class="text-gray-600 text-sm space-y-4 mb-8">
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Everything in Pro</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Priority support</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom integrations</li>
+            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Dedicated account manager</li>
+          </ul>
+          <a href="contact.html" class="w-full bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-center mt-auto shadow-md">Contact Us</a>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="js/main.js" type="module"></script>
+  <script>
+    document.getElementById('hamburger-btn')?.addEventListener('click', () => {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    });
+    
+    // Auth-aware nav logic
+    (function initAuthNav() {
+      const token = localStorage.getItem('ep_token');
+      const org   = JSON.parse(localStorage.getItem('ep_organizer') || 'null');
+      const area  = document.getElementById('nav-auth-area');
+      if (!area) return;
+
+      if (token && org) {
+        const initial = (org.name || 'U')[0].toUpperCase();
+        area.innerHTML = `
+          <a href="dashboard.html" class="flex items-center gap-2 text-black hover:bg-black/5 text-sm font-bold px-4 py-2 rounded-full transition duration-300 ease-in-out">
+            <div class="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white text-xs flex-shrink-0">${initial}</div>
+            <span class="hidden sm:inline">${org.name.split(' ')[0]}</span>
+          </a>
+          <a href="dashboard.html" class="bg-black text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-80 transition duration-300 ease-in-out shadow-sm">Dashboard</a>
+          <button onclick="localStorage.removeItem('ep_token');localStorage.removeItem('ep_organizer');window.location.reload();" class="border border-gray-300 text-gray-700 hover:text-black hover:border-black text-sm font-semibold px-4 py-2.5 rounded-full transition duration-300 ease-in-out">Logout</button>`;
+      }
+    })();
+  </script>
+</body>
+</html>

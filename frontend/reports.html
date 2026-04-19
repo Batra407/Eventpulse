@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — EventPulse</title>
+  <meta name="description" content="Full feedback report with AI-generated summary, top suggestions, and all responses.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="bg-blob-wrap" aria-hidden="true">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+  </div>
+
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="navbar-logo" href="index.html" aria-label="EventPulse Home">
+      <div class="navbar-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      EventPulse
+    </a>
+
+    <div class="navbar-links">
+      <a href="index.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <a href="dashboard.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="reports.html" class="active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Reports
+      </a>
+      <a href="history.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </a>
+    </div>
+
+    <div class="navbar-auth" id="nav-auth-area"></div>
+
+    <button class="navbar-hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" data-action="toggle-mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="menu">
+    <a href="dashboard.html" role="menuitem">Dashboard</a>
+    <a href="reports.html" role="menuitem">Reports</a>
+    <a href="history.html" role="menuitem">History</a>
+    <a href="index.html" role="menuitem">Home</a>
+  </div>
+
+  <div class="page-wrap">
+    <div class="content">
+      <div class="container report-doc" style="padding-top: 32px; padding-bottom: 80px;">
+
+        <!-- Page Header -->
+        <div class="section-header" style="margin-bottom: 28px;">
+          <div>
+            <h1 style="font-size: 1.75rem; margin-bottom: 4px;">Feedback Report</h1>
+            <p class="text-muted text-sm" id="report-generated">Generating report…</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" id="copy-report-btn" data-action="copy-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy
+            </button>
+            <button class="btn btn-primary btn-sm" id="download-report-btn" data-action="download-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download .txt
+            </button>
+          </div>
+        </div>
+
+        <div class="report-kpi-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
+          <div class="kpi-card accent-blue">
+            <div class="kpi-icon kpi-icon-blue" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="kpi-value" id="r-total">—</div>
+            <div class="kpi-label">Total Responses</div>
+          </div>
+          <div class="kpi-card accent-amber">
+            <div class="kpi-icon kpi-icon-amber" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="kpi-value" id="r-avg">—</div>
+            <div class="kpi-label">Avg. Rating</div>
+          </div>
+          <div class="kpi-card accent-purple">
+            <div class="kpi-icon kpi-icon-purple" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-value" id="r-nps">—</div>
+            <div class="kpi-label">NPS Score</div>
+          </div>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="ai-box">
+            <div class="ai-box-header">
+              <span class="ai-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                AI Generated
+              </span>
+              <h2 style="font-size: 0.9375rem; margin:0;">Summary</h2>
+            </div>
+            <p class="ai-text" id="report-ai-text">Loading AI summary…</p>
+          </div>
+        </div>
+
+        <!-- Top Suggestions -->
+        <div class="card" style="margin-bottom: 20px;">
+          <h2 style="font-size: 1rem; margin-bottom: 16px;">Top Suggestions</h2>
+          <div id="report-suggestions-list">
+            <p class="text-muted text-sm">No suggestions yet.</p>
+          </div>
+        </div>
+
+        <!-- All Responses -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h2 style="font-size: 1rem;">All Responses</h2>
+          </div>
+          <div id="report-responses-list">
+            <div style="color:var(--text-3);font-size:0.875rem;">Loading responses…</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js?v=6"></script>
+
+  <!-- GSAP for premium report animations -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script type="module" src="js/gsap-dashboard.js?v=6"></script>
+</body>
+</html>

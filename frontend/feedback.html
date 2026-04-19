@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Feedback — EventPulse</title>
+  <meta name="description" content="Share your feedback about this academic event — it takes just 2 minutes.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="bg-blob-wrap" aria-hidden="true">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+  </div>
+
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Minimal nav -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="navbar-logo" href="index.html" aria-label="EventPulse Home">
+      <div class="navbar-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      EventPulse
+    </a>
+    <div style="margin-left: auto;">
+      <a href="index.html" class="btn btn-ghost btn-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back
+      </a>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <div class="content">
+      <div class="container" style="max-width: 680px; padding-bottom: 80px;">
+
+        <!-- Feedback Form Card -->
+        <div class="card animate-up" id="feedback-form-card" style="margin-top: 24px; padding: 40px;">
+
+          <!-- Event Badge -->
+          <div style="margin-bottom: 24px;">
+            <span class="badge badge-blue" id="form-badge">Select an event</span>
+          </div>
+
+          <h1 style="font-size: 1.5rem; margin-bottom: 6px;">Share Your Feedback</h1>
+          <p class="text-muted text-sm" style="margin-bottom: 24px;">Your honest feedback helps us improve future events.</p>
+
+          <!-- Progress Indicator -->
+          <div class="progress-steps" aria-label="Form progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="4">
+            <div class="progress-step" id="ps1"></div>
+            <div class="progress-step" id="ps2"></div>
+            <div class="progress-step" id="ps3"></div>
+            <div class="progress-step" id="ps4"></div>
+          </div>
+          <p class="progress-label" id="progress-label">Step 1 of 4 — Overall Rating</p>
+
+          <div class="divider"></div>
+
+          <!-- Step 1: Star Rating -->
+          <div style="margin-bottom: 28px;">
+            <h2 style="font-size: 1rem; margin-bottom: 12px;">
+              <span style="display:inline-flex;align-items:center;gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Overall Rating
+              </span>
+            </h2>
+            <div class="star-row" role="group" aria-label="Star rating">
+              <button class="star-btn" data-action="set-rating" data-value="1" aria-label="1 star">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+              <button class="star-btn" data-action="set-rating" data-value="2" aria-label="2 stars">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+              <button class="star-btn" data-action="set-rating" data-value="3" aria-label="3 stars">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+              <button class="star-btn" data-action="set-rating" data-value="4" aria-label="4 stars">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+              <button class="star-btn" data-action="set-rating" data-value="5" aria-label="5 stars">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+            </div>
+            <p class="star-caption" id="star-caption" aria-live="polite">Click to rate your experience</p>
+          </div>
+
+          <!-- Step 2: Categories -->
+          <div style="margin-bottom: 28px;">
+            <h2 style="font-size: 1rem; margin-bottom: 12px;">
+              <span style="display:inline-flex;align-items:center;gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                What was great? <span class="text-muted" style="font-weight:400; font-size:0.875rem;">(select all that apply)</span>
+              </span>
+            </h2>
+            <div class="chip-grid" role="group" aria-label="Category selection">
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Content Quality</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Speaker</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Venue</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Organization</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Networking</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Materials</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Time Management</button>
+              <button class="chip" data-action="toggle-chip" aria-pressed="false">Q&A Session</button>
+            </div>
+          </div>
+
+          <!-- Step 3: NPS -->
+          <div style="margin-bottom: 28px;">
+            <h2 style="font-size: 1rem; margin-bottom: 4px;">
+              <span style="display:inline-flex;align-items:center;gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Recommendation Score
+              </span>
+            </h2>
+            <p class="text-muted text-sm" style="margin-bottom: 12px;">How likely are you to recommend this event? (1 = Not likely, 10 = Very likely)</p>
+            <div class="nps-grid" role="group" aria-label="NPS score 1 to 10">
+              <button class="nps-btn" data-action="set-nps" data-value="1" aria-label="Score 1">1</button>
+              <button class="nps-btn" data-action="set-nps" data-value="2" aria-label="Score 2">2</button>
+              <button class="nps-btn" data-action="set-nps" data-value="3" aria-label="Score 3">3</button>
+              <button class="nps-btn" data-action="set-nps" data-value="4" aria-label="Score 4">4</button>
+              <button class="nps-btn" data-action="set-nps" data-value="5" aria-label="Score 5">5</button>
+              <button class="nps-btn" data-action="set-nps" data-value="6" aria-label="Score 6">6</button>
+              <button class="nps-btn" data-action="set-nps" data-value="7" aria-label="Score 7">7</button>
+              <button class="nps-btn" data-action="set-nps" data-value="8" aria-label="Score 8">8</button>
+              <button class="nps-btn" data-action="set-nps" data-value="9" aria-label="Score 9">9</button>
+              <button class="nps-btn" data-action="set-nps" data-value="10" aria-label="Score 10">10</button>
+            </div>
+          </div>
+
+          <!-- Content Quality Slider -->
+          <div style="margin-bottom: 28px;">
+            <label class="field-label" for="content-slider" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Content Quality —
+              <span id="content-val" style="font-weight:700;color:var(--primary)">7</span>/10
+            </label>
+            <input type="range" id="content-slider" min="1" max="10" value="7" aria-label="Content quality score" style="--pct: 66.67%;">
+          </div>
+
+          <!-- Step 4: Comment -->
+          <div style="margin-bottom: 20px;">
+            <label class="field-label" for="comment-input" style="display:flex;align-items:center;gap:8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Your Thoughts <span style="color:var(--danger);" aria-hidden="true">*</span>
+            </label>
+            <textarea class="field-textarea" id="comment-input" placeholder="What did you enjoy? What could be improved?" required aria-required="true"></textarea>
+          </div>
+
+          <!-- Suggestion -->
+          <div class="field-group">
+            <label class="field-label" for="suggestion-input">Suggestions for Improvement <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <textarea class="field-textarea" id="suggestion-input" placeholder="Any specific suggestions…" style="min-height: 70px;"></textarea>
+          </div>
+
+          <!-- Email -->
+          <div class="field-group" style="margin-bottom: 28px;">
+            <label class="field-label" for="email-input">Your Email <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="email" class="field-input" id="email-input" placeholder="we'll follow up if you'd like" autocomplete="email">
+          </div>
+
+          <button class="btn btn-primary btn-lg" id="submit-feedback-btn" data-action="submit-feedback" style="width:100%;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit Feedback
+          </button>
+
+        </div>
+
+        <!-- Success Screen -->
+        <div class="card animate-up" id="success-screen" style="display:none; margin-top:24px; padding:60px 40px; text-align:center;">
+          <div style="width:64px;height:64px;background:#ECFDF5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--success);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 style="font-size:1.5rem;margin-bottom:8px;">Thank you!</h2>
+          <p class="text-muted" style="margin-bottom:28px;">Your feedback has been submitted successfully. It helps us improve every event.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <a href="index.html" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Back to Home
+            </a>
+            <button class="btn btn-secondary" id="submit-another-btn" onclick="document.getElementById('success-screen').style.display='none';document.getElementById('feedback-form-card').style.display='block';">
+              Submit Another
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js?v=6"></script>
+</body>
+</html>
