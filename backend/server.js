@@ -108,9 +108,11 @@ app.get('*', (req, res) => {
 app.use(errorHandler);
 
 // ── Start Server ───────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✅  Server running → http://localhost:${PORT}`);
-  console.log(`📌  Environment   → ${process.env.NODE_ENV || 'development'}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`✅  Server running → http://localhost:${PORT}`);
+    console.log(`📌  Environment   → ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;
