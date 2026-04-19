@@ -11,6 +11,7 @@ const connectDB = async () => {
       // Modern Mongoose (>=6) no longer needs useNewUrlParser / useUnifiedTopology
       serverSelectionTimeoutMS: 5000, // Fail fast if unreachable
       socketTimeoutMS: 45000,
+      bufferCommands: false, // Do not hang queries if connection drops
     });
     console.log(`✅  MongoDB Connected → ${conn.connection.host}`);
   } catch (err) {
