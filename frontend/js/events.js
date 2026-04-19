@@ -56,16 +56,9 @@ function renderEvents() {
   grid.innerHTML = EVENTS.map((e) => {
     const dateStr  = formatDate(e.date);
     const badgeClass = categoryColors[e.category] || 'badge-gray';
-    const isOrganizer = !!getAuthToken();
-    const deleteBtn = isOrganizer ? `
-      <button class="btn-danger" data-action="delete-event" data-event-id="${e._id}" style="position:absolute; top:12px; right:12px; padding:6px; background:var(--danger); color:white; border:none; border-radius:6px; cursor:pointer;" title="Delete Event">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      </button>
-    ` : '';
 
     return `
       <div class="event-card" data-action="open-feedback" data-event-id="${e._id}" role="button" tabindex="0" aria-label="Submit feedback for ${escapeHtml(e.name)}" style="position:relative;">
-        ${deleteBtn}
         <div class="event-card-header" style="margin-right:24px;">
           <div>
             <div class="event-card-title">${escapeHtml(e.name)}</div>
