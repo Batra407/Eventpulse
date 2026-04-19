@@ -154,7 +154,7 @@ export async function submitFeedback() {
   const submitBtn = document.getElementById('submit-feedback-btn');
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.innerHTML = 'Submitting…';
+    submitBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Submitting…';
   }
 
   const payload = {

@@ -5,12 +5,12 @@
 
 import { showPage, requireAuth }  from './router.js';
 import { updateAuthUI, doLogin, doRegister, doLogout, getAuthToken } from './auth.js';
-import { loadEvents, doCreateEvent, getEvents } from './events.js';
+import { loadEvents, doCreateEvent, getEvents, doDeleteEvent } from './events.js';
 import { openFeedback, setRating, setNPS, toggleChip, submitFeedback, updateProgress, updateRange, initFeedbackListeners } from './feedback.js';
 import { switchTab, startDashboardPoll, stopDashboardPoll } from './dashboard.js';
 import { downloadReport, copyReport } from './report.js';
 import { historyPrev, historyNext, initHistoryListeners } from './history.js';
-import { initScrollAnimation }  from './ui.js';
+import { initScrollAnimation, initGlobalLoader }  from './ui.js';
 
 // ── Global Event Delegation ─────────────────────────────────────────────────
 // Instead of inline onclick handlers, we use data-action attributes
@@ -99,6 +99,11 @@ document.addEventListener('click', (e) => {
 
     // Events
     case 'create-event': doCreateEvent(); break;
+    case 'delete-event': {
+      const eventId = target.dataset.eventId;
+      if (eventId) doDeleteEvent(eventId, target);
+      break;
+    }
 
     // Reports
     case 'download-report': downloadReport(); break;
@@ -135,6 +140,9 @@ if (slider) {
 // ── Initialization ──────────────────────────────────────────────────────────
 
 (async () => {
+  // Global Loader
+  initGlobalLoader();
+
   // Restore nav UI from stored session
   updateAuthUI();
 

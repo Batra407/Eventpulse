@@ -87,7 +87,7 @@ export async function doLogin() {
   }
 
   btn.disabled = true;
-  btn.textContent = 'Signing in…';
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Signing in…';
 
   try {
     // apiFetch returns { success, message, data: { token, organizer } }
@@ -137,7 +137,7 @@ export async function doRegister() {
   }
 
   btn.disabled = true;
-  btn.textContent = 'Creating account…';
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Creating account…';
 
   try {
     // apiFetch returns { success, message, data: { token, organizer } }

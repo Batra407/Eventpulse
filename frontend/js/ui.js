@@ -2,7 +2,8 @@
  * ui.js — Shared UI utility functions + premium motion system.
  * Exports: shakeEl, debounce, formatDate, escapeHtml,
  *          skeletonTableRows, skeletonKPIs,
- *          countUp, initScrollReveal, initHeroTilt, initActivityPulse
+ *          countUp, initScrollReveal, initHeroTilt, initActivityPulse,
+ *          initGlobalLoader, customConfirm
  */
 
 /* ── Basic Utilities ─────────────────────────────────────────── */
@@ -274,4 +275,75 @@ export function initScrollAnimation() {
   };
 
   window._scrollAnimCheck();
+}
+
+/* ── Global Loader ───────────────────────────────────────────── */
+
+/**
+ * Creates and injects the global full-page loader.
+ * Hides automatically when the page is fully loaded or after a timeout.
+ */
+export function initGlobalLoader() {
+  if (document.getElementById('global-loader')) return;
+
+  const loader = document.createElement('div');
+  loader.id = 'global-loader';
+  loader.innerHTML = '<span class="spinner"></span>';
+  document.body.appendChild(loader);
+
+  const hideLoader = () => {
+    loader.classList.add('hidden');
+    setTimeout(() => loader.remove(), 400); // Wait for fade out
+  };
+
+  if (document.readyState === 'complete') {
+    hideLoader();
+  } else {
+    window.addEventListener('load', hideLoader);
+    // Fallback in case load takes excessively long
+    setTimeout(hideLoader, 2000);
+  }
+}
+
+/* ── Custom Confirm Modal ────────────────────────────────────── */
+
+/**
+ * Creates a premium custom confirmation dialog.
+ * @param {string} title 
+ * @param {string} message 
+ * @param {Function} onConfirm 
+ */
+export function customConfirm(title, message, onConfirm) {
+  const existing = document.querySelector('.confirm-modal-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-modal-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-modal">
+      <div class="confirm-title">${escapeHtml(title)}</div>
+      <div class="confirm-message">${escapeHtml(message)}</div>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary btn-sm confirm-cancel">Cancel</button>
+        <button class="btn btn-danger btn-sm confirm-ok">Confirm</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Trigger reflow to animate in
+  void overlay.offsetWidth;
+  overlay.classList.add('active');
+
+  const close = () => {
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  overlay.querySelector('.confirm-cancel').addEventListener('click', close);
+  overlay.querySelector('.confirm-ok').addEventListener('click', () => {
+    onConfirm();
+    close();
+  });
 }

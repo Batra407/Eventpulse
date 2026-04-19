@@ -1913,3 +1913,162 @@ input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.15); box-shad
     will-change: auto;
   }
 }
+
+
+/* ── Global Transitions & Polish ── */
+
+body {
+  animation: pageFadeIn 0.4s ease-out forwards;
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Spinners ── */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.btn-secondary .spinner {
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: #333;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Button Micro-interactions ── */
+.btn {
+  transition: transform 300ms ease, box-shadow 300ms ease, background-color 200ms ease !important;
+}
+.btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── Card Micro-interactions ── */
+.card, .event-card, .kpi-card {
+  transition: transform 300ms ease, box-shadow 300ms ease !important;
+}
+.card:hover, .event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0,0,0,0.15) !important;
+}
+
+/* ── Sidebar Micro-interactions ── */
+.sidebar-link {
+  transition: background-color 0.2s ease, transform 0.2s ease !important;
+}
+.sidebar-link:hover {
+  transform: translateX(4px);
+}
+
+/* ── Background Blobs (Glassmorphism Enhance) ── */
+body::before {
+  content: "";
+  position: fixed;
+  top: -20%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -20%;
+  right: -10%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ── Full Page Loader ── */
+#global-loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-1);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+#global-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+#global-loader .spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+  border-color: var(--border-color);
+  border-top-color: var(--primary);
+}
+
+/* ── Custom Confirm Modal ── */
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+.confirm-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.confirm-modal {
+  background: var(--bg-1);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+.confirm-modal-overlay.active .confirm-modal {
+  transform: scale(1);
+}
+.confirm-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; }
+.confirm-message { font-size: 0.875rem; color: var(--text-3); margin-bottom: 24px; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 12px; }
+
+/* ── Delete Button Specific ── */
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
