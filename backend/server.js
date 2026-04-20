@@ -29,7 +29,8 @@ app.use('/api', async (req, res, next) => {
     next();
   } catch (err) {
     if (!res.headersSent) {
-      res.status(500).json({ success: false, message: 'Database connection failed. Check server logs.' });
+      // TEMPORARILY EXPOSE ERROR VISUALLY FOR DEBUGGING
+      res.status(500).json({ success: false, message: `DB Error: ${err.message}` });
     }
   }
 });
