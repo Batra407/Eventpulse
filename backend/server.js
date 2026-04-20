@@ -21,8 +21,18 @@ const attendanceRoutes = require('./routes/attendance');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
-// ── Connect to MongoDB ─────────────────────────────────────────────────────
-connectDB();
+// ── Database Connection Middleware for Serverless ──────────────────────────
+// Ensure DB is connected before processing any API route
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: 'Database connection failed. Check server logs.' });
+    }
+  }
+});
 
 // ── Security Middleware ────────────────────────────────────────────────────
 app.use(helmet({
