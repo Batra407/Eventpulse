@@ -116,6 +116,14 @@ app.get('*', (req, res) => {
 });
 
 // ── Global Error Handler ───────────────────────────────────────────────────
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    mongo_uri_exists: !!process.env.MONGO_URI,
+    jwt_secret_exists: !!process.env.JWT_SECRET,
+    keys: Object.keys(process.env).filter(k => k.includes('MONGO') || k.includes('JWT'))
+  });
+});
+
 app.use(errorHandler);
 
 // ── Start Server ───────────────────────────────────────────────────────────
