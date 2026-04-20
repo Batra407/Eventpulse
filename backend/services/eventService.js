@@ -11,7 +11,7 @@ const { AppError } = require('../middleware/errorHandler');
 const cache        = require('./cacheService');
 
 /** Public fields returned for event lists */
-const PUBLIC_FIELDS = 'name date category venue description enableAttendance';
+const PUBLIC_FIELDS = 'name date category venue description enableAttendance createdBy';
 
 /**
  * List all events — public endpoint for students.
@@ -90,8 +90,8 @@ const update = async (eventId, organizerId, updates) => {
 const remove = async (eventId, organizerId) => {
   const event = await Event.findById(eventId);
   if (!event) throw new AppError('Event not found', 404);
-  if (event.createdBy.toString() !== organizerId) {
-    throw new AppError('Forbidden — you do not own this event', 403);
+  if (event.createdBy.toString() !== String(organizerId)) {
+    throw new AppError(`Forbidden — you do not own this event. event.createdBy=${event.createdBy.toString()}, organizerId=${String(organizerId)}`, 403);
   }
 
   await Promise.all([
