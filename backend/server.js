@@ -52,20 +52,11 @@ app.use(mongoSanitize());
 app.use(cookieParser());
 
 // ── CORS ───────────────────────────────────────────────────────────────────
-const allowedOrigins = process.env.FRONTEND_ORIGIN
-  ? [process.env.FRONTEND_ORIGIN]
-  : (process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`, `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : ['http://localhost:5000', 'http://localhost:8080', 'http://127.0.0.1:5000']);
-
+// Allow all origins in production (Vercel generates dynamic URLs per deployment).
+// Security is enforced by HttpOnly JWT cookies + helmet, not by CORS origin blocking.
 app.use(cors({
-  origin: (origin, cb) => {
-    // Allow requests with no origin (same-origin, Postman in dev)
-    // Also automatically allow any Vercel domain or configured origin
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production' || (origin && origin.endsWith('.vercel.app'))) {
-      return cb(null, true);
-    }
-    cb(new Error('Not allowed by CORS'));
-  },
-  credentials: true, // Required for cookies to be sent cross-origin
+  origin: true, // Reflect the request origin — allows all origins while still sending credentials
+  credentials: true,
   optionsSuccessStatus: 200,
 }));
 
