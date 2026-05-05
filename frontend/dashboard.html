@@ -1721,9 +1721,9 @@
       } else {
         emptyEl.style.display = 'none';
         tbody.innerHTML = attendees.map((a, i) => `
-          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-            <td style="padding:14px 18px;font-size:12px;color:#fff;">${i + 1}</td>
-            <td style="padding:14px 14px;font-size:12px;color:#fff;font-weight:600;">${escH(a.attendeeName)}</td>
+          <tr style="border-bottom:1px solid rgba(0,0,0,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:14px 18px;font-size:12px;color:#44403c;">${i + 1}</td>
+            <td style="padding:14px 14px;font-size:12px;color:#1c1917;font-weight:600;">${escH(a.attendeeName)}</td>
             <td style="padding:14px 14px;font-size:12px;color: #44403c;">${escH(a.attendeeEmail)}</td>
             <td style="padding:14px 14px;font-size:12px;">
               <span style="display:inline-block;padding:4px 10px;border-radius:99px;font-weight:600;font-size:10px;text-transform:capitalize;
