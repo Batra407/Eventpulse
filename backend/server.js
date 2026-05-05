@@ -54,12 +54,13 @@ app.use(cookieParser());
 // ── CORS ───────────────────────────────────────────────────────────────────
 const allowedOrigins = process.env.FRONTEND_ORIGIN
   ? [process.env.FRONTEND_ORIGIN]
-  : ['http://localhost:5000', 'http://localhost:8080', 'http://127.0.0.1:5000'];
+  : (process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`, `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : ['http://localhost:5000', 'http://localhost:8080', 'http://127.0.0.1:5000']);
 
 app.use(cors({
   origin: (origin, cb) => {
     // Allow requests with no origin (same-origin, Postman in dev)
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    // Also automatically allow any Vercel domain or configured origin
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production' || (origin && origin.endsWith('.vercel.app'))) {
       return cb(null, true);
     }
     cb(new Error('Not allowed by CORS'));
