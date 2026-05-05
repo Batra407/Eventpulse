@@ -888,7 +888,6 @@
         ]);
 
         const dash = dashRes.data || {};
-        DASH_STATS    = dash.stats || { totalResponses:0, avgRating:0, avgNPS:0, avgContent:0 };
         RATING_DIST   = dash.ratingDistribution || [];
         CAT_DIST      = dash.categoryDistribution || [];
         EVENTS_DATA   = (dash.events || []).map((ev, i) => ({
@@ -900,6 +899,26 @@
           color: EVENT_COLORS[i % EVENT_COLORS.length],
         }));
         FEEDBACK_DATA = histRes.data?.feedbacks || [];
+
+        // Recalculate aggregate stats directly from EVENTS_DATA (ground truth).
+        // The server-side stats can be stale due to serverless caching; each
+        // individual event's totalResponses is always accurate.
+        {
+          let _total = 0, _sumR = 0, _sumNPS = 0, _att = 0;
+          EVENTS_DATA.forEach(e => {
+            const r = e.totalResponses || 0;
+            _total  += r;
+            _sumR   += (e.avgRating  || 0) * r;
+            _sumNPS += (e.npsScore   || 0) * r;
+            _att    += e.totalAttendees || 0;
+          });
+          DASH_STATS = {
+            totalResponses: _total,
+            totalAttendees: _att,
+            avgRating: _total > 0 ? Number((_sumR   / _total).toFixed(2)) : 0,
+            avgNPS:    _total > 0 ? Number((_sumNPS / _total).toFixed(2)) : 0,
+          };
+        }
         AI_DATA       = aiRes.data || null;
 
         updateStatCards();
