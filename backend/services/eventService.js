@@ -108,7 +108,7 @@ const create = async (data, ownerId, ip = '') => {
   const signedToken = jwt.sign(
     { eventId: eventId.toString(), generationId },
     process.env.JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '30d' }
   );
 
   const attendanceLink = `/attendance.html?eventId=${eventId.toString()}&token=${encodeURIComponent(signedToken)}`;
@@ -208,11 +208,11 @@ const regenerateQR = async (eventId, ownerId, ip = '') => {
   const generationId = crypto.randomBytes(8).toString('hex');
   event.attendanceToken = generationId;
   
-  // Sign a tamper-proof, expiring JWT (valid for 24 hours)
+  // Sign a tamper-proof, expiring JWT (valid for 30 days)
   const signedToken = jwt.sign(
     { eventId: event._id.toString(), generationId },
     process.env.JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '30d' }
   );
 
   const attendanceLinkRegen = `/attendance.html?eventId=${event._id}&token=${encodeURIComponent(signedToken)}`;
