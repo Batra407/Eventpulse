@@ -15,15 +15,16 @@ const NodeCache = require('node-cache');
 // stdTTL = default TTL in seconds; checkperiod = GC interval
 const cache = new NodeCache({ stdTTL: 60, checkperiod: 30, useClones: false });
 
-const DASHBOARD_TTL = 60;
-const REPORT_TTL    = 120;
-const AI_TTL        = 120;
+const isVercel = process.env.VERCEL === '1';
+const DASHBOARD_TTL = isVercel ? 0 : 60;
+const REPORT_TTL    = isVercel ? 0 : 120;
+const AI_TTL        = isVercel ? 0 : 120;
 
 /**
  * Get a value from cache.
  * @returns cached value or undefined on miss
  */
-const get = (key) => cache.get(key);
+const get = (key) => isVercel ? undefined : cache.get(key);
 
 /**
  * Set a value with an explicit TTL.
@@ -65,11 +66,11 @@ const invalidatePrefix = (prefix) => {
  * @returns {Promise<any>}
  */
 const getOrSet = async (key, fn, ttl) => {
-  const cached = cache.get(key);
+  const cached = isVercel ? undefined : cache.get(key);
   if (cached !== undefined) return cached;
 
   const value = await fn();
-  set(key, value, ttl);
+  if (!isVercel) set(key, value, ttl);
   return value;
 };
 
