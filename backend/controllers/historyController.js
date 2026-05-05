@@ -41,12 +41,12 @@ const getHistory = async (req, res) => {
 
   if (search?.trim()) {
     const regex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-    query.$or = [{ comment: regex }, { suggestion: regex }];
+    query.$or = [{ comments: regex }];
   }
 
   const [feedbacks, total] = await Promise.all([
     Feedback.find(query)
-      .select('eventId rating nps contentScore categories comment suggestion email createdAt')
+      .select('eventId overallRating recommendationScore comments attendeeEmail createdAt')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -54,7 +54,7 @@ const getHistory = async (req, res) => {
     Feedback.countDocuments(query),
   ]);
 
-  const eventMap = Object.fromEntries(events.map((e) => [e._id.toString(), e.name]));
+  const eventMap = Object.fromEntries(events.map((e) => [e._id.toString(), e.title]));
   const enriched = feedbacks.map((f) => ({
     ...f,
     eventName: eventMap[f.eventId.toString()] || 'Unknown Event',

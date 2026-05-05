@@ -142,7 +142,7 @@ body {
 .bg-blob-wrap {
   position: fixed;
   inset: 0;
-  pointer-events: none;
+  pointer-events: none !important;
   overflow: visible; /* don't clip the blur halos */
   z-index: 0;
 }
@@ -150,6 +150,7 @@ body {
   position: absolute;
   border-radius: 50%;
   will-change: transform;
+  pointer-events: none !important;
 }
 
 /* ── Blob 1: Blue/Indigo — top-right corner, clearly in viewport */
@@ -229,8 +230,8 @@ body {
   z-index: var(--z-base);
   min-height: 100vh;
 }
-.content { padding-top: calc(var(--nav-h) + 20px); }
-.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.content { padding-top: calc(var(--nav-h) + 20px); position: relative; z-index: 10; }
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 10; }
 
 /* ═══════════════════════════════════════════════════════════════
    FLOATING GLASS NAVBAR
@@ -464,6 +465,8 @@ h4 { font-size: 0.9rem; font-weight: 600; }
   box-shadow: var(--shadow-sm);
   padding: 24px;
   transition: box-shadow 0.22s ease, transform 0.22s ease;
+  position: relative;
+  z-index: 10;
 }
 .card:hover { box-shadow: var(--shadow-md); }
 
@@ -1852,7 +1855,7 @@ input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.15); box-shad
 
 
 /* --------------------------------------------------------------
-   DASHBOARD + REPORT � Premium Motion Tokens
+   DASHBOARD + REPORT � Premium Motion Tokens
    -------------------------------------------------------------- */
 
 /* KPI card GPU compositing */
@@ -2072,3 +2075,6 @@ body::after {
 .btn-danger:hover {
   background: #dc2626;
 }
+
+.star-btn svg { pointer-events: none !important; }
+

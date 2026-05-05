@@ -2,48 +2,103 @@ const mongoose = require('mongoose');
 
 /**
  * Attendance Model
- * Tracks individual attendance records per event.
- * Each roll number can only appear once per event (enforced by unique index).
+ * Stores individual check-ins via QR scan or manual entry.
  */
 const AttendanceSchema = new mongoose.Schema(
   {
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Event ID is required'],
+      required: [true, 'eventId is required'],
       index: true,
     },
-    name: {
+    attendeeName: {
       type: String,
       required: [true, 'Attendee name is required'],
       trim: true,
-      maxlength: [200, 'Name cannot exceed 200 characters'],
     },
-    rollNo: {
+    attendeeEmail: {
       type: String,
-      required: [true, 'Roll number is required'],
       trim: true,
-      uppercase: true,
-      maxlength: [50, 'Roll number cannot exceed 50 characters'],
-    },
-    markedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    ip: {
-      type: String,
+      lowercase: true,
       default: '',
     },
-    method: {
+    phone: {
       type: String,
-      enum: ['qr', 'manual'],
+      trim: true,
+      default: '',
+    },
+    college: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    organization: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    batch: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    course: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    status: {
+      type: String,
+      enum: ['present', 'absent', 'pending', 'checked-in', 'Present', 'Absent'], // Keeping capitalized for legacy compatibility
+      default: 'checked-in',
+    },
+    attendanceType: {
+      type: String,
+      enum: ['qr', 'manual', 'system', 'QR', 'Manual', 'System'],
       default: 'qr',
     },
+    submittedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organizer',
+      default: null,
+    },
+    scannedFromIP: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    deviceInfo: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true, // Auto manages createdAt and updatedAt (timestamp)
+  }
 );
 
-// Prevent duplicate roll number per event
-AttendanceSchema.index({ eventId: 1, rollNo: 1 }, { unique: true });
+// Compound index to prevent duplicate attendance per event per email (only if email is provided)
+AttendanceSchema.index(
+  { eventId: 1, attendeeEmail: 1 }, 
+  { unique: true, partialFilterExpression: { attendeeEmail: { $gt: '' } } }
+);
+
+// Index for active queries
+AttendanceSchema.index({ eventId: 1, isDeleted: 1, createdAt: -1 });
+
+// Index for analytics and dashboard filters
+AttendanceSchema.index({ eventId: 1, status: 1 });
+AttendanceSchema.index({ eventId: 1, attendanceType: 1 });
 
 module.exports = mongoose.model('Attendance', AttendanceSchema);

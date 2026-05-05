@@ -36,6 +36,6 @@ module.exports = defineConfig({
   // Reporter (console summary + HTML report in test-results/html)
   reporter: [
     ['list'],
-    ['html', { outputFolder: 'test-results/html', open: 'never' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
   ],
 });

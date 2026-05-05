@@ -6,12 +6,13 @@
  * issues (those modules also import from router.js).
  */
 
-import { getAuthToken } from './auth.js';
+import { getSession } from './auth.js';
 
 const PROTECTED_PAGES = ['dashboard.html', 'reports.html', 'history.html'];
 
-export function requireAuth(targetUrl) {
-  if (getAuthToken()) {
+export async function requireAuth(targetUrl) {
+  const session = await getSession();
+  if (session) {
     if (targetUrl) window.location.href = targetUrl;
   } else {
     window.location.href = '/login.html';
@@ -26,8 +27,10 @@ export function showPage(url) {
 const path = window.location.pathname;
 const isProtected = PROTECTED_PAGES.some(p => path.endsWith(p));
 
-if (isProtected && !getAuthToken()) {
-  window.location.href = '/login.html';
+if (isProtected) {
+  getSession().then(session => {
+    if (!session) window.location.href = '/login.html';
+  });
 }
 
 /** Scroll handler — adds shadow to the navbar when page is scrolled */
@@ -59,10 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if (currentPath.endsWith('history.html')) {
     import('./history.js').then(({ renderHistory }) => renderHistory());
   } else if (currentPath.endsWith('index.html') || currentPath.endsWith('/')) {
-    import('./auth.js').then(({ getAuthToken }) => {
-      if (getAuthToken()) {
-        import('./events.js').then(({ updateHeroCard }) => updateHeroCard());
-      }
+    import('./auth.js').then(({ getSession }) => {
+      getSession().then(session => {
+        if (session) {
+          import('./events.js').then(({ updateHeroCard }) => updateHeroCard());
+        }
+      });
     });
   }
 });

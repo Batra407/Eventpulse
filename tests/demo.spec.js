@@ -2,13 +2,14 @@
 /**
  * EventPulse — Full E2E Demo Flow
  * ════════════════════════════════
- * Matches the ACTUAL dashboard.html SPA structure:
- *   - Sidebar nav: .ni elements with onclick="go('section')"
- *   - Modal: #mo (overlay) gets class .open; form fields: #m-name, #m-date, #m-cat, #m-loc, #m-att
- *   - Auth: localStorage ep_token / ep_organizer
- *   - Logout: dashboard calls logout() → JS fn clears storage + redirects
- *   - Organizer info shown in: #org-name
- * Video recorded by playwright.config.js (video: 'on')
+ * Uses a test-seed API endpoint to create an already-approved organizer,
+ * bypassing the admin-approval registration gate.
+ *
+ * Matches actual HTML structure:
+ *   - author-login.html: #author-email, #author-password, #login-btn
+ *   - dashboard.html: sidebar go('section'), #mo modal, #m-name, #m-date,
+ *                     #m-cat, #m-loc, #m-att, #mok, #org-name, #qa-event-sel
+ *   - attendance.html: #form-state, #att-name, #att-roll, #submit-btn, #success-state
  */
 
 const { test, expect } = require('@playwright/test');
@@ -16,195 +17,199 @@ const path  = require('path');
 const fs    = require('fs');
 
 // ── Unique test credentials ────────────────────────────────────────────────
-const TS          = Date.now();
-const TEST_EMAIL  = `demo${TS}@eventpulse.test`;
-const TEST_PASS   = 'Demo1234!';
-const TEST_NAME   = 'Demo Organizer';
-const EVENT_NAME  = `Demo Workshop ${TS}`;
+const TS         = Date.now();
+const TEST_EMAIL = `e2e${TS}@eventpulse.test`;
+const TEST_PASS  = 'Demo1234!';
+const TEST_NAME  = 'E2E Test Organizer';
+const EVENT_NAME = `E2E Workshop ${TS}`;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-async function safeClick(page, selector, opts = {}) {
+async function safeClick(page, selector) {
   const el = page.locator(selector).first();
   await el.waitFor({ state: 'visible', timeout: 15000 });
   await el.scrollIntoViewIfNeeded();
-  await el.click(opts);
-}
-
-async function waitForToast(page, fragment) {
-  try { await page.locator(`#ta`).locator(`text=${fragment}`).waitFor({ timeout: 6000 }); }
-  catch { /* toast may have dismissed */ }
+  await el.click();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-test('EventPulse Full Demo Flow', async ({ page }) => {
+test('EventPulse Full Demo Flow', async ({ page, request }) => {
+  // Debug: log browser API errors only
+  page.on('pageerror', err => console.log(`[PageError]: ${err.message}`));
+  page.on('response', res => {
+    if (!res.ok() && res.url().includes('/api/')) {
+      console.log(`[API Fail] ${res.status()} ${res.url()}`);
+    }
+  });
+
+  // ── STEP 0: Seed approved organizer via test API ───────────────────────
+  await test.step('0 · Seed approved organizer account', async () => {
+    const res = await request.post('/api/v1/test/seed-organizer', {
+      data: { name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASS },
+    });
+    expect(res.status(), `Seed failed: ${await res.text()}`).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    console.log(`[Test] Seeded organizer: ${body.data.email}`);
+  });
 
   // ── STEP 1: Homepage ───────────────────────────────────────────────────
   await test.step('1 · Open homepage', async () => {
     await page.goto('/');
     await expect(page).toHaveTitle(/EventPulse/i);
     await page.waitForLoadState('networkidle');
-    // Take a moment to show the landing page
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(600);
   });
 
-  // ── STEP 2-3: Register new organizer ──────────────────────────────────
-  await test.step('2-3 · Register organizer account', async () => {
-    await page.goto('/register.html');
+  // ── STEP 2: Login as the seeded organizer ─────────────────────────────
+  await test.step('2 · Login as organizer', async () => {
+    await page.goto('/author-login.html');
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('#reg-name')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#author-email')).toBeVisible({ timeout: 10000 });
 
-    await page.fill('#reg-name',     TEST_NAME);
-    await page.fill('#reg-email',    TEST_EMAIL);
-    await page.fill('#reg-password', TEST_PASS);
-    await page.waitForTimeout(400);
+    await page.fill('#author-email',    TEST_EMAIL);
+    await page.fill('#author-password', TEST_PASS);
+    await page.waitForTimeout(300);
 
-    await page.click('[data-action="register"]');
+    await page.click('#login-btn');
 
-    // Wait for redirect to dashboard (absolute path /dashboard.html)
+    // Wait for redirect to dashboard
     await page.waitForURL('**/dashboard.html', { timeout: 25000 });
     await page.waitForLoadState('networkidle');
   });
 
-  // ── STEP 4: Verify dashboard loaded ───────────────────────────────────
-  await test.step('4 · Dashboard loaded and organizer info visible', async () => {
+  // ── STEP 3: Verify dashboard loaded ───────────────────────────────────
+  await test.step('3 · Dashboard loaded, organizer info visible', async () => {
     await expect(page).toHaveURL(/dashboard\.html/);
-    // Dashboard populates #org-name from localStorage
     await page.locator('#org-name').waitFor({ state: 'visible', timeout: 15000 });
     const orgName = await page.locator('#org-name').textContent();
-    expect(orgName).toBeTruthy();
-    // Stat cards should be visible
+    expect(orgName?.trim()).toBeTruthy();
     await expect(page.locator('#stat-responses')).toBeVisible();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(600);
   });
 
-  // ── STEP 5: Create event from dashboard modal ─────────────────────────
-  await test.step('5 · Create new event with attendance enabled', async () => {
-    // Click the "New Event" button in the topbar (id="create-event-btn")
+  // ── STEP 4: Create event from dashboard modal ─────────────────────────
+  await test.step('4 · Create new event with attendance enabled', async () => {
     await safeClick(page, '#create-event-btn');
 
     // Modal overlay #mo should get class .open
     await page.locator('#mo.open').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Fill create event form fields (rendered dynamically into #mbody)
+    // Fill form fields (rendered dynamically into #mbody)
     await page.locator('#m-name').fill(EVENT_NAME);
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dateStr = tomorrow.toISOString().split('T')[0];
     await page.locator('#m-date').fill(dateStr);
-
     await page.locator('#m-cat').selectOption('Workshop');
     await page.locator('#m-loc').fill('Main Auditorium');
 
-    // Ensure attendance checkbox is checked (it's checked by default)
+    // Ensure attendance checkbox is checked
     const attChk = page.locator('#m-att');
     if (!(await attChk.isChecked())) await attChk.check();
 
-    await page.waitForTimeout(400);
-
-    // Click the Create Event button (#mok)
+    await page.waitForTimeout(300);
     await safeClick(page, '#mok');
 
     // Wait for modal to close
     await page.locator('#mo.open').waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
-    await waitForToast(page, 'created');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
   });
 
-  // ── STEP 6: Verify event in Events section ────────────────────────────
-  await test.step('6 · Event appears in Events section', async () => {
-    // Navigate to Events section via sidebar
+  // ── STEP 5: Verify event in Events section ────────────────────────────
+  await test.step('5 · Event appears in Events section', async () => {
     await page.evaluate(() => go('events'));
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(600);
 
     const evGrid = page.locator('#ev-grid');
     await evGrid.waitFor({ state: 'visible', timeout: 10000 });
 
-    // The new event name should appear
     const eventEl = evGrid.locator(`text=${EVENT_NAME}`).first();
     await eventEl.waitFor({ timeout: 10000 });
     await expect(eventEl).toBeVisible();
   });
 
-  // ── STEP 7: Get attendance link from API ──────────────────────────────
+  // ── STEP 6: Get attendance URL for the created event ──────────────────
   let attendanceUrl;
-  await test.step('7 · Get attendance URL for event', async () => {
-    const res = await page.request.get('/api/events');
-    const data = await res.json();
-    const events = data?.data?.events || [];
-    const evt = events.find(e => e.name === EVENT_NAME);
-    expect(evt, 'Created event not found').toBeTruthy();
-    attendanceUrl = `/attendance.html?eventId=${evt._id}`;
+  await test.step('6 · Get attendance URL from backend API', async () => {
+    const res = await page.request.get('/api/v1/events');
+    const body = await res.json();
+    const events = body?.data?.events || body?.data || [];
+    const evt = events.find(e => e.title === EVENT_NAME);
+    expect(evt, `Event "${EVENT_NAME}" not found in API`).toBeTruthy();
 
-    // Also navigate to QR Attendance section in dashboard to show QR
+    // Use the pre-signed attendanceLink if available (has JWT token)
+    attendanceUrl = evt.attendanceLink
+      ? `http://localhost:5000${evt.attendanceLink}`
+      : `http://localhost:5000/attendance.html?eventId=${evt._id}`;
+
+    console.log(`[Test] Attendance URL: ${attendanceUrl}`);
+    expect(attendanceUrl).toContain('eventId');
+
+    // Show QR attendance panel in dashboard
     await page.evaluate(() => go('qr-attendance'));
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(500);
 
-    // Select the event in the dropdown
     const sel = page.locator('#qa-event-sel');
     await sel.waitFor({ state: 'visible', timeout: 8000 });
-    await sel.selectOption({ label: evt.name }).catch(() => {
-      // If label format differs, select by value
-      return page.evaluate((id) => {
-        const s = document.getElementById('qa-event-sel');
-        if (s) { s.value = id; s.dispatchEvent(new Event('change')); }
-      }, evt._id);
-    });
-    await page.waitForTimeout(1200);
+
+    // Select event by its _id
+    await page.evaluate((id) => {
+      const s = document.getElementById('qa-event-sel');
+      if (s) { s.value = id; s.dispatchEvent(new Event('change')); }
+    }, evt._id);
+
+    // Wait for QR content panel to become visible (attendance is enabled)
+    await page.locator('#qa-content').waitFor({ state: 'visible', timeout: 12000 });
+    await page.waitForTimeout(600);
   });
 
-  // ── STEP 8: Open attendance page + submit ─────────────────────────────
-  await test.step('8 · Submit attendance via QR form', async () => {
+  // ── STEP 7: Submit attendance via the QR link ─────────────────────────
+  await test.step('7 · Submit attendance via QR form', async () => {
     await page.goto(attendanceUrl);
     await page.waitForLoadState('networkidle');
 
-    // Wait for the form to appear (loading-state → form-state)
+    // Wait for form state to appear
     await page.locator('#form-state').waitFor({ state: 'visible', timeout: 20000 });
     await expect(page.locator('#event-name')).toBeVisible();
 
     await page.fill('#att-name', 'Test Student');
     await page.fill('#att-roll', 'CS2024001');
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(300);
 
     await page.click('#submit-btn');
 
     // Wait for success state
     await page.locator('#success-state').waitFor({ state: 'visible', timeout: 15000 });
     await expect(page.locator('#success-name')).toContainText('Test Student');
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(800);
   });
 
-  // ── STEP 9: Back to dashboard ─────────────────────────────────────────
-  await test.step('9 · Dashboard shows attendance data', async () => {
+  // ── STEP 8: Back to dashboard ─────────────────────────────────────────
+  await test.step('8 · Dashboard shows updated attendance', async () => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/dashboard\.html/);
     await page.locator('#org-name').waitFor({ state: 'visible', timeout: 15000 });
 
-    // Navigate to QR Attendance to see updated attendee list
     await page.evaluate(() => go('qr-attendance'));
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(800);
   });
 
-  // ── STEP 10: Reports page ─────────────────────────────────────────────
-  await test.step('10 · Navigate to Reports section', async () => {
-    // Use sidebar nav to go to reports
+  // ── STEP 9: Reports section ───────────────────────────────────────────
+  await test.step('9 · Navigate to Reports section', async () => {
     await page.evaluate(() => go('reports'));
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(600);
 
     const grid = page.locator('#rp-grid');
     await grid.waitFor({ state: 'visible', timeout: 10000 });
     await expect(page.locator('#reports-mini-stats')).toBeVisible();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
   });
 
-  // ── STEP 11: Download report ──────────────────────────────────────────
-  await test.step('11 · Download report CSV', async () => {
-    // The dashboard Reports section has Download buttons per event (dlEvReport)
-    // We can also use the main /reports.html page for txt download
+  // ── STEP 10: Download report ──────────────────────────────────────────
+  await test.step('10 · Download report CSV', async () => {
     const [download] = await Promise.all([
       page.waitForEvent('download', { timeout: 15000 }),
-      // Click the first Download button visible in the reports grid
       page.locator('.bp').filter({ hasText: 'Download' }).first().click(),
     ]);
     const fname = download.suggestedFilename();
@@ -212,29 +217,32 @@ test('EventPulse Full Demo Flow', async ({ page }) => {
     const savePath = path.join('test-results', fname || 'report.csv');
     fs.mkdirSync('test-results', { recursive: true });
     await download.saveAs(savePath);
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
   });
 
-  // ── STEP 12: Logout ────────────────────────────────────────────────────
-  await test.step('12 · Logout clears session', async () => {
-    // dashboard.html has a logout() function but it may be triggered via
-    // the sidebar bottom area or a settings button. Call it directly via JS.
+  // ── STEP 11: Logout ────────────────────────────────────────────────────
+  await test.step('11 · Logout clears session', async () => {
     await page.evaluate(() => {
       if (typeof logout === 'function') logout();
       else {
         localStorage.removeItem('ep_token');
         localStorage.removeItem('ep_organizer');
-        window.location.href = '/login.html';
+        window.location.href = '/author-login.html';
       }
     });
 
-    await page.waitForURL(/login\.html|index\.html|\/$/, { timeout: 15000 });
+    await page.waitForURL(/login\.html|author-login\.html|index\.html|\/$/, { timeout: 15000 });
 
-    // Token must be gone
     const token = await page.evaluate(() => localStorage.getItem('ep_token'));
     expect(token).toBeNull();
-
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(600);
   });
 
+  // ── CLEANUP: Remove seeded test data ──────────────────────────────────
+  await test.step('Cleanup · Remove seeded test organizer', async () => {
+    const res = await request.delete('/api/v1/test/cleanup-organizer', {
+      data: { email: TEST_EMAIL },
+    });
+    expect(res.ok()).toBe(true);
+  });
 });

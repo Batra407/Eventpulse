@@ -4,14 +4,14 @@
 
 import { apiFetch }    from './api.js';
 import { showPage }    from './router.js';
-import { getAuthToken } from './auth.js';
+// Removed getAuthToken
 import { toastSuccess, toastError } from './toast.js';
 import { formatDate, escapeHtml, customConfirm } from './ui.js';
 
-/** Live events fetched from /api/events */
+/** Live events fetched from /api/v1/events */
 let EVENTS = [];
 
-/** Map of { [eventId]: eventName } for quick lookup */
+/** Map of { [eventId]: eventTitle } for quick lookup */
 export let eventNameMap = {};
 
 /** Get the current EVENTS array */
@@ -58,10 +58,10 @@ function renderEvents() {
     const badgeClass = categoryColors[e.category] || 'badge-gray';
 
     return `
-      <div class="event-card" data-action="open-feedback" data-event-id="${e._id}" role="button" tabindex="0" aria-label="Submit feedback for ${escapeHtml(e.name)}" style="position:relative;">
+      <div class="event-card" data-action="open-feedback" data-event-id="${e._id}" role="button" tabindex="0" aria-label="Submit feedback for ${escapeHtml(e.title)}" style="position:relative;">
         <div class="event-card-header" style="margin-right:24px;">
           <div>
-            <div class="event-card-title">${escapeHtml(e.name)}</div>
+            <div class="event-card-title">${escapeHtml(e.title)}</div>
             <div class="event-card-meta">${dateStr}${e.venue ? ' · ' + escapeHtml(e.venue) : ''}</div>
           </div>
           <span class="badge ${badgeClass}">${escapeHtml(e.category)}</span>
@@ -75,15 +75,15 @@ function renderEvents() {
 }
 
 /**
- * Fetch live events from /api/events and render the grid.
+ * Fetch live events from /api/v1/events and render the grid.
  */
 export async function loadEvents() {
   try {
-    const res  = await apiFetch('/api/events');
+    const res  = await apiFetch('/api/v1/events');
     // API returns { success, data: { events: [], total, page, pages } }
     EVENTS     = (res.data && Array.isArray(res.data.events)) ? res.data.events : [];
     eventNameMap = {};
-    EVENTS.forEach((e) => { eventNameMap[e._id] = e.name; });
+    EVENTS.forEach((e) => { eventNameMap[e._id] = e.title; });
     renderEvents();
   } catch (e) {
     console.warn('Could not load events:', e.message);
@@ -120,7 +120,7 @@ export async function updateHeroCard() {
  * Create a new event from the dashboard.
  */
 export async function doCreateEvent() {
-  const name        = document.getElementById('ce-name')?.value.trim();
+  const title       = document.getElementById('ce-name')?.value.trim(); // Re-use the existing HTML ID
   const date        = document.getElementById('ce-date')?.value;
   const category    = document.getElementById('ce-category')?.value;
   const venue       = document.getElementById('ce-venue')?.value.trim();
@@ -130,8 +130,8 @@ export async function doCreateEvent() {
 
   if (errEl) errEl.style.display = 'none';
 
-  if (!name || !date || !category) {
-    if (errEl) { errEl.textContent = 'Name, date, and category are required.'; errEl.style.display = 'block'; }
+  if (!title || !date || !category) {
+    if (errEl) { errEl.textContent = 'Title, date, and category are required.'; errEl.style.display = 'block'; }
     return;
   }
 
@@ -139,10 +139,10 @@ export async function doCreateEvent() {
   btn.innerHTML = '<span class="spinner"></span> Creating…';
 
   try {
-    await apiFetch('/api/events', {
+    await apiFetch('/api/v1/events', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ name, date, category, venue, description }),
+      body:    JSON.stringify({ title, date, category, venue, description, attendanceEnabled: true }), // Enable attendance by default for new events
     });
 
     // Reset form
@@ -182,13 +182,13 @@ export function doDeleteEvent(eventId, btn) {
   const evt = getEventById(eventId);
   if (!evt) return;
 
-  customConfirm('Delete Event', `Are you sure you want to delete "${evt.name}"? This action cannot be undone.`, async () => {
+  customConfirm('Delete Event', `Are you sure you want to delete "${evt.title}"? This action cannot be undone.`, async () => {
     try {
       if (btn) {
         btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0;"></span>';
         btn.disabled = true;
       }
-      await apiFetch(`/api/events/${eventId}`, { method: 'DELETE' });
+      await apiFetch(`/api/v1/events/${eventId}`, { method: 'DELETE' });
       toastSuccess('Event deleted successfully ✅');
       await loadEvents();
       // Also reload dashboard if on dashboard page

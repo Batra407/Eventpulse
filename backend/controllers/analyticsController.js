@@ -24,8 +24,8 @@ const getSummary = async (req, res) => {
       $group: {
         _id: null,
         totalResponses: { $sum: 1 },
-        avgRating:      { $avg: '$rating' },
-        avgNPS:         { $avg: '$nps' },
+        avgRating:      { $avg: '$overallRating' },
+        avgNPS:         { $avg: '$recommendationScore' },
       },
     },
     {
@@ -51,8 +51,8 @@ const getCategories = async (req, res) => {
 
   const result = await Feedback.aggregate([
     { $match: { eventId: { $in: eventIds } } },
-    { $unwind: '$categories' },
-    { $group: { _id: '$categories', count: { $sum: 1 } } },
+    { $unwind: '$selectedTags' },
+    { $group: { _id: '$selectedTags', count: { $sum: 1 } } },
     { $sort: { count: -1 } },
     { $project: { _id: 0, category: '$_id', count: 1 } },
   ]);
@@ -67,7 +67,7 @@ const getRatings = async (req, res) => {
 
   const result = await Feedback.aggregate([
     { $match: { eventId: { $in: eventIds } } },
-    { $group: { _id: '$rating', count: { $sum: 1 } } },
+    { $group: { _id: '$overallRating', count: { $sum: 1 } } },
     { $sort: { _id: 1 } },
     { $project: { _id: 0, rating: '$_id', count: 1 } },
   ]);

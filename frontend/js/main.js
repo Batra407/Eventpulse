@@ -4,7 +4,7 @@
  */
 
 import { showPage, requireAuth }  from './router.js';
-import { updateAuthUI, doLogin, doRegister, doLogout, getAuthToken } from './auth.js';
+import { updateAuthUI, doRegister, doLogout, getSession } from './auth.js';
 import { loadEvents, doCreateEvent, getEvents, doDeleteEvent } from './events.js';
 import { openFeedback, setRating, setNPS, toggleChip, submitFeedback, updateProgress, updateRange, initFeedbackListeners } from './feedback.js';
 import { switchTab, startDashboardPoll, stopDashboardPoll } from './dashboard.js';
@@ -38,7 +38,6 @@ document.addEventListener('click', (e) => {
     case 'go-back-dashboard':  showPage('dashboard.html'); break;
 
     // Auth
-    case 'login':    doLogin(); break;
     case 'register': doRegister(); break;
     case 'logout':   stopDashboardPoll(); doLogout(); break;
 
@@ -127,7 +126,6 @@ document.addEventListener('click', (e) => {
 // Handle Enter key on login/register password fields
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
-  if (e.target.id === 'login-password') doLogin();
   if (e.target.id === 'reg-password') doRegister();
 });
 
@@ -138,20 +136,23 @@ if (slider) {
 }
 
 // ── Initialization ──────────────────────────────────────────────────────────
+import { authStore } from './authStore.js';
 
 (async () => {
   // Global Loader
   initGlobalLoader();
 
-  // Restore nav UI from stored session
-  updateAuthUI();
+  // Reactive UI binding to auth state
+  authStore.subscribe((organizer) => {
+    updateAuthUI(organizer);
+  });
+
+  // Load events from API (public endpoint) FIRST to prevent race conditions
+  await loadEvents();
 
   // Initialize form listeners
   initFeedbackListeners();
   initHistoryListeners();
-
-  // Load events from API (public endpoint)
-  await loadEvents();
 
   // Initialize scroll animation
   initScrollAnimation();
@@ -164,7 +165,8 @@ if (slider) {
   }
 
   // Update hero card if logged in
-  if (getAuthToken()) {
+  const session = await getSession();
+  if (session) {
     const { updateHeroCard } = await import('./events.js');
     updateHeroCard();
   }

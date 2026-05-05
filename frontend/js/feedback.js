@@ -5,7 +5,7 @@
 
 import { apiFetch }    from './api.js';
 import { showPage }    from './router.js';
-import { getEventById, updateHeroCard } from './events.js';
+import { getEventById, getEvents, updateHeroCard } from './events.js';
 import { shakeEl }     from './ui.js';
 import { toastSuccess, toastError } from './toast.js';
 
@@ -33,15 +33,18 @@ export function openFeedback(id) {
     window.location.href = `feedback.html?eventId=${id}`;
     return;
   }
-  
+
   selectedEvent = getEventById(id);
-  if (!selectedEvent) { console.error('Event not found:', id); return; }
+  if (!selectedEvent) {
+    console.warn('Event not found in public list, using fallback:', id);
+    selectedEvent = { _id: id, title: 'Selected Event' };
+  }
   selectedRating = 0;
   selectedNPS    = 0;
 
   // Update badge
   const badge = document.getElementById('form-badge');
-  if (badge) badge.textContent = '✦ ' + selectedEvent.name;
+  if (badge) badge.textContent = '✦ ' + selectedEvent.title;
 
   // Reset star & NPS
   document.querySelectorAll('.star-btn').forEach((b) => b.classList.remove('lit'));
@@ -51,10 +54,8 @@ export function openFeedback(id) {
 
   // Clear text fields
   const commentEl    = document.getElementById('comment-input');
-  const emailEl      = document.getElementById('email-input');
   const suggestionEl = document.getElementById('suggestion-input');
   if (commentEl)    commentEl.value    = '';
-  if (emailEl)      emailEl.value      = '';
   if (suggestionEl) suggestionEl.value = '';
 
   // Reset slider
@@ -158,18 +159,15 @@ export async function submitFeedback() {
   }
 
   const payload = {
-    eventId:      selectedEvent._id,
-    rating:       selectedRating,
-    contentScore: parseInt(document.getElementById('content-slider').value),
-    nps:          selectedNPS || 5,
-    categories:   [...document.querySelectorAll('.chip.active')].map((c) => c.textContent.trim()),
-    comment,
-    suggestion:   document.getElementById('suggestion-input').value.trim(),
-    email:        document.getElementById('email-input').value.trim(),
+    eventId:             selectedEvent._id,
+    overallRating:       selectedRating,
+    recommendationScore: selectedNPS || 5,
+    selectedTags:        [...document.querySelectorAll('.chip.active')].map((c) => c.textContent.trim()),
+    comments:            comment,
   };
 
   try {
-    await apiFetch('/api/feedback', {
+    await apiFetch('/api/v1/feedback', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
@@ -208,13 +206,21 @@ export function initFeedbackListeners() {
     setTimeout(() => updateRange(slider, 'content-val'), 100);
   }
 
-  // Pre-load event if eventId is in URL
   if (window.location.pathname.endsWith('feedback.html')) {
     const urlParams = new URLSearchParams(window.location.search);
-    const eventId = urlParams.get('eventId');
+    const eventId = urlParams.get('eventId') || urlParams.get('id');
+    
     if (eventId) {
-      // Need wait to assure API loaded events array
-      setTimeout(() => openFeedback(eventId), 300);
+      openFeedback(eventId);
+    } else {
+      // If user navigates directly to feedback.html without an ID, fallback to the first event
+      const events = getEvents();
+      if (events && events.length > 0) {
+        console.log('No eventId in URL, falling back to first event:', events[0]._id);
+        openFeedback(events[0]._id);
+      } else {
+        console.warn('No events found in database.');
+      }
     }
   }
 }

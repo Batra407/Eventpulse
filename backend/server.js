@@ -1,10 +1,12 @@
 require('dotenv').config();
-const express   = require('express');
-const cors      = require('cors');
-const path      = require('path');
-const helmet    = require('helmet');
-const rateLimit = require('express-rate-limit');
-const connectDB = require('./config/db');
+const express      = require('express');
+const cors         = require('cors');
+const path         = require('path');
+const helmet       = require('helmet');
+const rateLimit    = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
+const connectDB    = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
 
 // ── Route imports ──────────────────────────────────────────────────────────
@@ -15,30 +17,23 @@ const dashboardRoutes = require('./routes/dashboard');
 const aiRoutes        = require('./routes/ai');
 const reportRoutes    = require('./routes/report');
 const historyRoutes   = require('./routes/history');
-const analyticsRoutes  = require('./routes/analytics');
+const analyticsRoutes = require('./routes/analytics');
 const attendanceRoutes = require('./routes/attendance');
+const userAuthRoutes   = require('./routes/userAuth');
+const adminRoutes      = require('./routes/admin');
+const testRoutes       = require('./routes/test'); // E2E test seeding (dev/test only)
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
-app.get('/api/debug-env', (req, res) => {
-  res.json({
-    mongo_uri_exists: !!process.env.MONGO_URI,
-    jwt_secret_exists: !!process.env.JWT_SECRET,
-    keys: Object.keys(process.env).filter(k => k.includes('MONGO') || k.includes('JWT'))
-  });
-});
-
-// ── Database Connection Middleware for Serverless ──────────────────────────
-// Ensure DB is connected before processing any API route
+// ── Database Connection Middleware ─────────────────────────────────────────
 app.use('/api', async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
     if (!res.headersSent) {
-      // TEMPORARILY EXPOSE ERROR VISUALLY FOR DEBUGGING
-      res.status(500).json({ success: false, message: `DB Error: ${err.message}` });
+      res.status(500).json({ success: false, message: 'Database connection failed' });
     }
   }
 });
@@ -49,50 +44,88 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// General API rate limit — 200 req / 15 min per IP
+// Prevent NoSQL injection in MongoDB queries
+app.use(mongoSanitize());
+
+// ── Cookie Parser ─────────────────────────────────────────────────────────
+// Required for reading HttpOnly JWT cookies on organizer routes
+app.use(cookieParser());
+
+// ── CORS ───────────────────────────────────────────────────────────────────
+const allowedOrigins = process.env.FRONTEND_ORIGIN
+  ? [process.env.FRONTEND_ORIGIN]
+  : ['http://localhost:5000', 'http://localhost:8080', 'http://127.0.0.1:5000'];
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (same-origin, Postman in dev)
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      return cb(null, true);
+    }
+    cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true, // Required for cookies to be sent cross-origin
+  optionsSuccessStatus: 200,
+}));
+
+// ── Body Parsers ───────────────────────────────────────────────────────────
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// ── Rate Limiting ──────────────────────────────────────────────────────────
+
+// General API limit
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: process.env.NODE_ENV === 'production' ? 200 : 5000, // relaxed for dev
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests — please try again later' },
 });
 app.use('/api/', limiter);
 
-// Stricter limit on auth endpoints — 20 req / 15 min
+// Auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { success: false, message: 'Too many login attempts — please try again later' },
+  max: process.env.NODE_ENV === 'production' ? 100 : 5000, // relaxed for dev
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts — please try again later' },
 });
 app.use('/api/auth', authLimiter);
+app.use('/api/v1/auth', authLimiter); // Protect v1 routes as well
 
-// ── Body Parsers ───────────────────────────────────────────────────────────
-// ── CORS ──────────────────────────────────────────────────────────────────
-// In production, lock to FRONTEND_ORIGIN env var (same-origin via Express static
-// means CORS is not needed between our own pages, but external tools may call API).
-const corsOptions = process.env.FRONTEND_ORIGIN
-  ? { origin: process.env.FRONTEND_ORIGIN, optionsSuccessStatus: 200 }
-  : {}; // development — allow all origins
-app.use(cors(corsOptions));
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true }));
+// Admin endpoints
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 30 : 5000, // relaxed for dev
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many admin requests' },
+});
+app.use('/api/admin', adminLimiter);
+app.use('/api/v1/admin', adminLimiter);
 
-// ── Request Logger (latency-aware) ────────────────────────────────────────
-app.use((req, _res, next) => {
+// ── Request Logger & Trace ID ──────────────────────────────────────────────
+const crypto = require('crypto');
+const logger = require('./utils/logger');
+
+app.use((req, res, next) => {
+  req.id = req.headers['x-trace-id'] || crypto.randomUUID();
+  res.setHeader('x-trace-id', req.id);
+  next();
+});
+
+app.use((req, res, next) => {
   if (!req.path.startsWith('/api/')) return next();
-
   const start = Date.now();
-  _res.on('finish', () => {
-    const ms     = Date.now() - start;
-    const status = _res.statusCode;
-    const flag   = ms > 300 ? ' ⚠️  SLOW' : '';
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`${req.method} ${req.path} → ${status} [${ms}ms]${flag}`);
-    } else if (status >= 400 || ms > 300) {
-      // In production only log errors + slow requests
-      console.log(`${req.method} ${req.path} → ${status} [${ms}ms]${flag}`);
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const status = res.statusCode;
+    if (ms > 300) {
+      logger.warn(`SLOW REQUEST [${req.id}] ${req.method} ${req.path} → ${status} [${ms}ms]`);
+    } else if (process.env.NODE_ENV !== 'production' || status >= 400) {
+      logger.info(`[${req.id}] ${req.method} ${req.path} → ${status} [${ms}ms]`);
     }
   });
   next();
@@ -101,20 +134,42 @@ app.use((req, _res, next) => {
 // ── Serve static frontend ──────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// ── API Routes ─────────────────────────────────────────────────────────────
-app.use('/api/auth',      authRoutes);
-app.use('/api/events',    eventRoutes);
-app.use('/api/feedback',  feedbackRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/ai',        aiRoutes);
-app.use('/api/report',    reportRoutes);
-app.use('/api/history',   historyRoutes);
-app.use('/api/analytics',  analyticsRoutes);
-app.use('/api/attendance', attendanceRoutes);
+// ── Health Check Endpoints ──────────────────────────────────────────────────
+app.get('/health', (_req, res) => res.status(200).json({ status: 'UP', timestamp: new Date() }));
+app.get('/ready', async (_req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const state = mongoose.connection.readyState;
+    if (state !== 1) throw new Error('DB not connected');
+    res.status(200).json({ status: 'READY', db: 'connected' });
+  } catch (err) {
+    res.status(503).json({ status: 'NOT_READY', error: err.message });
+  }
+});
+// Versioned alias so frontend apiFetch('/api/v1/health') also works
+app.get('/api/v1/health', (_req, res) => res.status(200).json({ status: 'UP', timestamp: new Date() }));
 
-// ── Legacy SPA route redirects ─────────────────────────────────────────────
-// Old frontend code called showPage('login-page') — redirect to the real pages
-app.get('/login-page',     (_req, res) => res.redirect(301, '/login.html'));
+// ── API Routes (v1) ────────────────────────────────────────────────────────
+const apiV1 = express.Router();
+apiV1.use('/auth',       authRoutes);
+apiV1.use('/events',     eventRoutes);
+apiV1.use('/feedback',   feedbackRoutes);
+apiV1.use('/dashboard',  dashboardRoutes);
+apiV1.use('/ai',         aiRoutes);
+apiV1.use('/report',     reportRoutes);
+apiV1.use('/history',    historyRoutes);
+apiV1.use('/analytics',  analyticsRoutes);
+apiV1.use('/attendance', attendanceRoutes);
+apiV1.use('/users/auth', userAuthRoutes);
+apiV1.use('/admin',      adminRoutes); // Super admin only
+if (process.env.NODE_ENV !== 'production') {
+  apiV1.use('/test', testRoutes);   // E2E test seeding (dev/test only)
+}
+
+app.use('/api/v1', apiV1);
+
+// ── Legacy SPA redirects ───────────────────────────────────────────────────
+app.get('/login-page',     (_req, res) => res.redirect(301, '/author-login.html'));
 app.get('/dashboard-page', (_req, res) => res.redirect(301, '/dashboard.html'));
 app.get('/register-page',  (_req, res) => res.redirect(301, '/register.html'));
 
@@ -131,6 +186,7 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`✅  Server running → http://localhost:${PORT}`);
     console.log(`📌  Environment   → ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔒  Auth mode     → HttpOnly cookie JWT`);
   });
 }
 

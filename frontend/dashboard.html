@@ -496,6 +496,7 @@
                   <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Rating</th>
                   <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">NPS</th>
                   <th style="padding:11px 18px;text-align:right;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Sentiment</th>
+                  <th style="padding:11px 18px;text-align:right;font-size:10px;font-weight:600;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Actions</th>
                 </tr>
               </thead>
               <tbody id="at-body"></tbody>
@@ -511,9 +512,14 @@
               <h2 class="glow">QR Attendance</h2>
               <p>Track who attended your events via QR scan or manual entry</p>
             </div>
-            <button class="bp" style="padding:9px 16px;display:flex;align-items:center;gap:5px;flex-shrink:0;" onclick="exportAttCSV()">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Export CSV
-            </button>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+              <a href="scanner.html" class="bs" style="padding:9px 16px;display:flex;align-items:center;gap:5px;text-decoration:none;font-size:12px;font-weight:700;border-radius:8px;">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M21 16h-5v5M21 21v.01"/></svg>Open Scanner
+              </a>
+              <button class="bp" style="padding:9px 16px;display:flex;align-items:center;gap:5px;" onclick="exportAttCSV()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Export CSV
+              </button>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:flex-end;margin-bottom:18px;">
             <div>
@@ -564,7 +570,17 @@
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;">
                   <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Full Name *</label><input id="qa-name" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="e.g. Rahul Sharma" /></div>
-                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Roll Number *</label><input id="qa-roll" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="e.g. CS2021001" oninput="this.value=this.value.toUpperCase()" /></div>
+                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Section</label><input id="qa-course" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="Optional" /></div>
+                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">College</label><input id="qa-college" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="Optional" /></div>
+                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Email</label><input id="qa-email" type="email" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;" placeholder="Optional" /></div>
+                  <div><label style="font-size:10px;font-weight:600;color: #44403c;text-transform:uppercase;letter-spacing:0.9px;display:block;margin-bottom:5px;">Status</label>
+                    <select id="qa-status" class="g-inp" style="width:100%;padding:9px 13px;font-size:13px;">
+                      <option value="present">Present</option>
+                      <option value="absent">Absent</option>
+                      <option value="checked-in">Checked-in</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
                   <div id="qa-manual-err" style="display:none;font-size:11.5px;color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:7px 11px;"></div>
                   <button class="bp" style="padding:10px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="addManualAttendee()" id="qa-add-btn">Add Attendee</button>
                 </div>
@@ -583,10 +599,11 @@
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                     <th style="padding:10px 18px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">#</th>
                     <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Name</th>
-                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Roll No.</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Email</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Status</th>
                     <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Time</th>
                     <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Method</th>
-                    <th style="padding:10px 18px;text-align:right;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Remove</th>
+                    <th style="padding:10px 18px;text-align:right;font-size:10px;font-weight:700;color: #44403c;letter-spacing:0.9px;text-transform:uppercase;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="qa-tbody"></tbody>
@@ -728,25 +745,48 @@
     // All data fetched from /api/* —  NO hardcoded values below
     // ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ ══════════ 
 
-    //  API LAYER 
+    //  API LAYER — Cookie-based auth (HttpOnly cookies sent automatically)
     const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:5000' : window.location.origin;
 
-    const getToken = () => localStorage.getItem('ep_token');
-
     async function apiFetch(path, options = {}) {
+      let finalPath = path;
+      if (path.startsWith('/api/') && !path.startsWith('/api/v1/')) {
+        finalPath = path.replace('/api/', '/api/v1/');
+      }
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 12000);
       const headers = { ...(options.headers || {}) };
-      const tok = getToken();
-      if (tok) headers['Authorization'] = `Bearer ${tok}`;
       try {
-        const res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal: ctrl.signal });
+        // credentials:'include' sends HttpOnly cookies automatically — no manual token needed
+        const res = await fetch(`${API_BASE}${finalPath}`, { ...options, headers, credentials: 'include', signal: ctrl.signal });
         clearTimeout(t);
-        if (res.status === 401) { window.location.href = '/login.html'; throw new Error('Session expired'); }
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = '/author-login.html';
+          throw new Error('Session expired or access denied');
+        }
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || `HTTP ${res.status}`); }
         return res.json();
       } catch (e) { clearTimeout(t); if (e.name === 'AbortError') throw new Error('Request timed out'); throw e; }
+    }
+
+    //  SESSION GUARD — verify via backend (not localStorage)
+    async function guardSession() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/me`, { credentials: 'include' });
+        if (!res.ok) { window.location.replace('/author-login.html'); return null; }
+        const json = await res.json();
+        const org = json.data;
+        if (org.isSuspended || org.organizerStatus !== 'approved') {
+          await fetch(`${API_BASE}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' });
+          window.location.replace('/author-login.html');
+          return null;
+        }
+        return org;
+      } catch {
+        window.location.replace('/author-login.html');
+        return null;
+      }
     }
 
     //  LIVE STATE (replaces all static arrays) 
@@ -853,6 +893,9 @@
         CAT_DIST      = dash.categoryDistribution || [];
         EVENTS_DATA   = (dash.events || []).map((ev, i) => ({
           ...ev,
+          name: ev.title,
+          responseCount: ev.totalResponses,
+          avgNPS: ev.npsScore,
           status: evStatus(ev),
           color: EVENT_COLORS[i % EVENT_COLORS.length],
         }));
@@ -866,6 +909,7 @@
         renderReports();
         renderAI();
         buildAttFilter();
+        renderQRAttendance();
         updateEventsBadge();
         loadOrganizerInfo();
         renderNotifs();
@@ -884,11 +928,13 @@
     //  HELPER FUNCTIONS (Restored)
     function buildAttFilter() {
       const sel = document.getElementById('at-ev');
-      if (!sel) return;
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">All Events</option>' + EVENTS_DATA.map(e => 
-        `<option value="${e._id}" ${e._id===cur?'selected':''}>${escH(e.name)}</option>`
-      ).join('');
+      if (sel) {
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">All Events</option>' + EVENTS_DATA.map(e =>
+          `<option value="${e._id}" ${e._id===cur?'selected':''}>${escH(e.title || e.name || 'Unnamed Event')}</option>`
+        ).join('');
+      }
+      // QR dropdown is handled by renderQRAttendance() — do not duplicate here
     }
 
     function dlReport(name, content) {
@@ -933,10 +979,9 @@
       toast('All data exported!', 'success');
     }
 
-    function logout() {
-      localStorage.removeItem('ep_token');
-      localStorage.removeItem('ep_organizer');
-      window.location.href = 'login.html';
+    async function logout() {
+      try { await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+      window.location.href = 'author-login.html';
     }
 
     //  STAT CARDS 
@@ -975,7 +1020,7 @@
       if (el('nps-gauge-val')) el('nps-gauge-val').textContent = total > 0 ? Math.round(nps) : '— ';
 
       // Attendees card (shows total responses)
-      if (el('stat-attendees')) { el('stat-attendees').style.opacity='1'; animCount(el('stat-attendees'), total); }
+      if (el('stat-attendees')) { el('stat-attendees').style.opacity='1'; animCount(el('stat-attendees'), DASH_STATS.totalAttendees || 0); }
       if (el('stat-attendees-bar')) el('stat-attendees-bar').style.width = pct + '%';
       if (el('stat-attendees-pct')) el('stat-attendees-pct').textContent = pct + '% collected';
       if (el('stat-attendees-cap')) el('stat-attendees-cap').textContent = 'Goal: ' + goal.toLocaleString();
@@ -1187,12 +1232,21 @@
         const stars = [1,2,3,4,5].map(i=>`<svg width="12" height="12" fill="${i<=rating?'#fbbf24':'rgba(0,0,0,0.1)'}" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`).join('');
         const name = escH(a.email || 'Anonymous');
         const init = (a.email||'?')[0].toUpperCase();
-        return `<tr class="atr" style="border-bottom:1px solid rgba(0,0,0,0.05);">
+        const isHidden = a.moderationStatus === 'hidden';
+        const modBtn = isHidden
+          ? `<button onclick="moderateFeedback('${a._id}', 'visible')" style="font-size:10.5px;color:#34d399;background:rgba(52,211,153,0.1);border:none;cursor:pointer;padding:4px 8px;border-radius:6px;margin-right:4px;">Show</button>`
+          : `<button onclick="moderateFeedback('${a._id}', 'hidden')" style="font-size:10.5px;color:#fbbf24;background:rgba(251,191,36,0.1);border:none;cursor:pointer;padding:4px 8px;border-radius:6px;margin-right:4px;">Hide</button>`;
+          
+        return `<tr class="atr" style="border-bottom:1px solid rgba(0,0,0,0.05); ${isHidden ? 'opacity:0.5;' : ''}">
           <td style="padding:11px 18px;"><div style="display:flex;align-items:center;gap:9px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5a3c,#fbbf24);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;">${init}</div><div><div style="font-size:13px;font-weight:700;color: #1c1917;">${name}</div><div style="font-size:10.5px;color: #44403c;">${fmtD(a.createdAt)}</div></div></div></td>
           <td style="padding:11px 14px;font-size:12.5px;color: #44403c;">${escH(a.eventName||'— ')}</td>
           <td style="padding:11px 14px;text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:1px;">${stars}</div></td>
           <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:#fbbf24;">${a.nps||'— '}</td>
           <td style="padding:11px 18px;text-align:right;"><span style="font-size:10.5px;font-weight:700;background:${sc.bg};border:1px solid ${sc.bdr};color:${sc.c};border-radius:99px;padding:3px 9px;">${sentCap}</span></td>
+          <td style="padding:11px 18px;text-align:right;">
+            ${modBtn}
+            <button onclick="deleteFeedback('${a._id}')" style="font-size:10.5px;color:rgba(239,68,68,0.7);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;">Del</button>
+          </td>
         </tr>`;
       }).join('');
     }
@@ -1211,6 +1265,34 @@
     function genAttCSV() {
       return 'Email,Event,Rating,NPS,Sentiment,Date\n'+FEEDBACK_DATA.map(a=>`${a.email||''},${a.eventName||''},${a.rating||0},${a.nps||0},${a.sentiment||''},${fmtD(a.createdAt)}`).join('\n');
     }
+
+    window.moderateFeedback = async function(id, status) {
+      try {
+        await apiFetch(`/api/v1/feedback/${id}/moderate`, {
+          method: 'PATCH',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status })
+        });
+        toast(`Feedback marked as ${status}`, 'success');
+        const fb = FEEDBACK_DATA.find(f => f._id === id);
+        if (fb) fb.moderationStatus = status;
+        filterAtt();
+      } catch (e) {
+        toast('Failed to moderate: ' + e.message, 'error');
+      }
+    };
+
+    window.deleteFeedback = async function(id) {
+      if (!confirm('Are you sure you want to permanently delete this feedback?')) return;
+      try {
+        await apiFetch(`/api/v1/feedback/${id}`, { method: 'DELETE' });
+        toast('Feedback deleted', 'success');
+        FEEDBACK_DATA = FEEDBACK_DATA.filter(f => f._id !== id);
+        filterAtt();
+      } catch (e) {
+        toast('Failed to delete: ' + e.message, 'error');
+      }
+    };
 
     //  AI INSIGHTS 
     function renderAI() {
@@ -1354,18 +1436,19 @@
     }
 
     //  ORGANIZER 
-    function loadOrganizerInfo() {
+    async function loadOrganizerInfo() {
       try {
-        const raw = localStorage.getItem('ep_organizer'); if (!raw) return;
-        const org = JSON.parse(raw);
-        const name  = org.name || org.organizerName || 'Organizer';
-        const email = org.email || org.organizerEmail || '';
+        const res  = await fetch('/api/v1/auth/me', { credentials: 'include' });
+        if (!res.ok) return;
+        const org  = (await res.json()).data;
+        const name  = org.name || 'Organizer';
+        const email = org.email || '';
         const el = id => document.getElementById(id);
-        if (el('org-name')) el('org-name').textContent = name;
-        if (el('org-email')) el('org-email').textContent = email;
+        if (el('org-name'))    el('org-name').textContent    = name;
+        if (el('org-email'))   el('org-email').textContent   = email;
         if (el('org-initial')) el('org-initial').textContent = name[0]?.toUpperCase() || 'O';
-        if (el('sett-name')) el('sett-name').value = name;
-        if (el('sett-email')) el('sett-email').value = email;
+        if (el('sett-name'))   el('sett-name').value  = name;
+        if (el('sett-email'))  el('sett-email').value  = email;
       } catch (_) {}
     }
 
@@ -1384,7 +1467,7 @@
             <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">EVENT NAME</label><input id="m-name" class="g-inp" style="width:100%;padding:10px;" placeholder="e.g. Q2 Product Launch" /></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">DATE</label><input id="m-date" type="date" class="g-inp" style="width:100%;padding:10px;" /></div>
-              <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">CATEGORY</label><select id="m-cat" class="g-inp" style="width:100%;padding:10px;"><option>Workshop</option><option>Seminar</option><option>Conference</option><option>Webinar</option><option>Hackathon</option><option>Cultural</option><option>Sports</option><option>Other</option></select></div>
+              <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">CATEGORY</label><select id="m-cat" class="g-inp" style="width:100%;padding:10px;"><option>Workshop</option><option>Seminar</option><option>Conference</option><option>Webinar</option><option>Hackathon</option><option>Cultural</option><option>Sports</option><option>Networking</option><option>Other</option></select></div>
             </div>
             <div><label style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;color: #44403c;">VENUE / LINK</label><input id="m-loc" class="g-inp" style="width:100%;padding:10px;" placeholder="e.g. Grand Ballroom" /></div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:4px;"><input type="checkbox" id="m-att" style="width:14px;height:14px;accent-color:#7c5a3c;" checked /><label for="m-att" style="font-size:12px;color: #44403c;font-weight:600;cursor:pointer;">Enable Attendance Tracking</label></div>
@@ -1399,12 +1482,12 @@
           if (!dt) { toast('Event date is required','error'); return; }
           try {
             ok.textContent = 'Creating…'; ok.disabled = true;
-            await apiFetch('/api/events', {
+            await apiFetch('/api/v1/events', {
               method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ name:nm, date:dt, category:cat, venue:loc, description:desc, enableAttendance: document.getElementById('m-att')?.checked || false }),
+              body: JSON.stringify({ title:nm, date:dt, category:cat, venue:loc, description:desc, attendanceEnabled: document.getElementById('m-att')?.checked || false }),
             });
-            closeMo(); toast('🎯 Event created!','success');
             await loadAll();
+            closeMo(); toast('🎯 Event created!','success');
           } catch(e) { toast('Failed: '+e.message,'error'); ok.textContent='Create Event'; ok.disabled=false; }
         };
       } else if (type === 'detail' && data) {
@@ -1545,13 +1628,14 @@
     function renderQRAttendance() {
       const sel = document.getElementById('qa-event-sel');
       if (!sel) return;
-      sel.innerHTML = '<option value="">-- Choose an event --</option>';
-      EVENTS_DATA.forEach(ev => {
-        const opt = document.createElement('option');
-        opt.value = ev._id;
-        opt.textContent = ev.name + (ev.enableAttendance ? ' [Attendance On]' : '');
-        sel.appendChild(opt);
-      });
+      const attEvents = EVENTS_DATA.filter(ev => ev.attendanceEnabled);
+      if (attEvents.length === 0) {
+        sel.innerHTML = '<option value="">No events with attendance enabled</option>';
+      } else {
+        sel.innerHTML = '<option value="">-- Choose an event --</option>' + attEvents.map(ev =>
+          `<option value="${ev._id}">${escH(ev.title || ev.name || 'Unnamed Event')}</option>`
+        ).join('');
+      }
       // Reset to no event state
       document.getElementById('qa-no-event').style.display = '';
       document.getElementById('qa-disabled-msg').style.display = 'none';
@@ -1559,186 +1643,225 @@
       document.getElementById('qa-att-badge').style.display = 'none';
     }
 
-    function onQAEventChange() {
+    /* Missing QR Attendance functions restored into dashboard.html */
+
+    window.onQAEventChange = async function() {
       const sel = document.getElementById('qa-event-sel');
       const eventId = sel.value;
       if (!eventId) {
-        document.getElementById('qa-no-event').style.display = '';
+        document.getElementById('qa-no-event').style.display = 'block';
         document.getElementById('qa-disabled-msg').style.display = 'none';
         document.getElementById('qa-content').style.display = 'none';
         document.getElementById('qa-att-badge').style.display = 'none';
-        QA_CURRENT_EVENT = null;
         return;
       }
-      const ev = EVENTS_DATA.find(e => e._id === eventId);
-      QA_CURRENT_EVENT = ev;
+
+      // Use EVENTS_DATA cache first to avoid extra API call
+      const cached = EVENTS_DATA.find(e => e._id === eventId);
+      if (cached) {
+        QA_CURRENT_EVENT = cached;
+      } else {
+        try {
+          const res = await apiFetch(`/api/v1/events/${eventId}`);
+          QA_CURRENT_EVENT = res.data;
+        } catch (err) {
+          toast(err.message || 'Failed to load event details', 'error');
+          return;
+        }
+      }
+        
       document.getElementById('qa-no-event').style.display = 'none';
-      if (!ev || !ev.enableAttendance) {
-        document.getElementById('qa-disabled-msg').style.display = '';
+
+      if (!QA_CURRENT_EVENT.attendanceEnabled) {
+        document.getElementById('qa-disabled-msg').style.display = 'block';
         document.getElementById('qa-content').style.display = 'none';
         document.getElementById('qa-att-badge').style.display = 'none';
-        return;
-      }
-      // Show content
-      document.getElementById('qa-disabled-msg').style.display = 'none';
-      document.getElementById('qa-content').style.display = '';
-      document.getElementById('qa-att-badge').style.display = '';
-      // Generate QR
-      const attURL = window.location.origin + '/attendance.html?eventId=' + eventId;
-      document.getElementById('qa-att-link').textContent = attURL;
-      const qrBox = document.getElementById('qa-qr-canvas');
-      qrBox.innerHTML = '<div style="color:#999;font-size:12px;">Generating...</div>';
-      loadQRLib(() => {
-        qrBox.innerHTML = '';
-        const canvas = document.createElement('canvas');
-        qrBox.appendChild(canvas);
-        QRCode.toCanvas(canvas, attURL, { width: 140, margin: 1 }, err => {
-          if (err) qrBox.innerHTML = '<div style="color:#f87171;font-size:11px;">QR failed</div>';
-        });
-      });
-      // Load attendees from backend
-      loadQAAttendees(eventId);
-    }
+      } else {
+        document.getElementById('qa-disabled-msg').style.display = 'none';
+        document.getElementById('qa-content').style.display = 'block';
+        document.getElementById('qa-att-badge').style.display = 'block';
 
-    async function loadQAAttendees(eventId) {
-      document.getElementById('qa-total').textContent = '...';
+        const qrCanvas = document.getElementById('qa-qr-canvas');
+        const linkDiv = document.getElementById('qa-att-link');
+        if (QA_CURRENT_EVENT.qrCode) {
+          qrCanvas.innerHTML = `<img src="${QA_CURRENT_EVENT.qrCode}" style="max-width:100%;border-radius:8px;" alt="QR Code" />`;
+        } else {
+          qrCanvas.innerHTML = '<div style="color:#999;font-size:12px;">QR code not available</div>';
+        }
+        if (QA_CURRENT_EVENT.attendanceLink) {
+          linkDiv.textContent = window.location.origin + QA_CURRENT_EVENT.attendanceLink;
+        }
+
+        await loadQATable(eventId);
+      }
+    };
+
+    let currentQAAttendees = [];
+
+    async function loadQATable(eventId) {
       try {
-        const res = await apiFetch('/api/attendance/' + eventId);
-        const list = res.data?.attendees || [];
-        renderQATable(list);
-      } catch(e) {
-        // Fall back to localStorage
-        const stored = getLocalAtt(eventId);
-        renderQATable(stored);
+        const res = await apiFetch(`/api/v1/attendance/${eventId}`);
+        currentQAAttendees = res.data?.attendees || [];
+        renderQATable(currentQAAttendees);
+      } catch (err) {
+        console.error('Failed to load attendees', err);
       }
     }
 
-    function getLocalAtt(eventId) {
-      try { return JSON.parse(localStorage.getItem('att_list_' + eventId) || '[]'); } catch(_) { return []; }
-    }
-
-    function saveLocalAtt(eventId, list) {
-      localStorage.setItem('att_list_' + eventId, JSON.stringify(list));
-    }
-
-    function renderQATable(list) {
-      const q = document.getElementById('qa-search')?.value?.toLowerCase() || '';
-      const filtered = q ? list.filter(a => a.name.toLowerCase().includes(q) || a.rollNo.toLowerCase().includes(q)) : list;
+    function renderQATable(attendees) {
       const tbody = document.getElementById('qa-tbody');
-      const empty = document.getElementById('qa-empty');
-      document.getElementById('qa-total').textContent = list.length;
-      if (!filtered.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
-      empty.style.display = 'none';
-      tbody.innerHTML = filtered.map((a, i) => {
-        const t = a.markedAt ? new Date(a.markedAt).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) : '—';
-        const d = a.markedAt ? new Date(a.markedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '';
-        const method = a.method === 'manual' ? '<span style="font-size:10px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;border-radius:99px;padding:2px 8px;">Manual</span>' : '<span style="font-size:10px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#7c5a3c;border-radius:99px;padding:2px 8px;">QR</span>';
-        return `<tr class="tr" style="border-bottom:1px solid rgba(255,255,255,0.05);">
-          <td style="padding:10px 18px;font-size:12px;color: #44403c;">${i+1}</td>
-          <td style="padding:10px 14px;"><div style="font-size:13px;font-weight:600;">${escH(a.name)}</div></td>
-          <td style="padding:10px 14px;font-size:12px;font-weight:600;color:#fbbf24;">${escH(a.rollNo)}</td>
-          <td style="padding:10px 14px;font-size:11px;color: #44403c;">${t}<div style="font-size:10px;color: #44403c;">${d}</div></td>
-          <td style="padding:10px 14px;text-align:center;">${method}</td>
-          <td style="padding:10px 18px;text-align:right;"><button onclick="removeQAAttendee('${escH(a.rollNo)}')" style="font-size:11px;color:rgba(239,68,68,0.7);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;hover:background:rgba(239,68,68,0.1);">Remove</button></td>
-        </tr>`;
-      }).join('');
+      const totalEl = document.getElementById('qa-total');
+      const emptyEl = document.getElementById('qa-empty');
+
+      totalEl.textContent = attendees.length;
+
+      if (attendees.length === 0) {
+        tbody.innerHTML = '';
+        emptyEl.style.display = 'block';
+      } else {
+        emptyEl.style.display = 'none';
+        tbody.innerHTML = attendees.map((a, i) => `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:14px 18px;font-size:12px;color:#fff;">${i + 1}</td>
+            <td style="padding:14px 14px;font-size:12px;color:#fff;font-weight:600;">${escH(a.attendeeName)}</td>
+            <td style="padding:14px 14px;font-size:12px;color: #44403c;">${escH(a.attendeeEmail)}</td>
+            <td style="padding:14px 14px;font-size:12px;">
+              <span style="display:inline-block;padding:4px 10px;border-radius:99px;font-weight:600;font-size:10px;text-transform:capitalize;
+                ${a.status === 'present' ? 'background:rgba(52,211,153,0.15);color:#34d399;' : 
+                  a.status === 'absent' ? 'background:rgba(248,113,113,0.15);color:#f87171;' : 
+                  'background:rgba(251,191,36,0.15);color:#fbbf24;'}">
+                ${a.status}
+              </span>
+            </td>
+            <td style="padding:14px 14px;font-size:12px;color: #44403c;">${new Date(a.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
+            <td style="padding:14px 14px;text-align:center;">
+              <span style="font-size:10px;font-weight:700;color: #44403c;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;text-transform:uppercase;">
+                ${a.attendanceType || '—'}
+              </span>
+            </td>
+            <td style="padding:14px 18px;text-align:right;">
+              <button onclick="deleteAttendee('${a._id}')" class="bs" style="padding:4px 8px;font-size:11px;color:#f87171;border-color:rgba(248,113,113,0.3);">Remove</button>
+            </td>
+          </tr>
+        `).join('');
+      }
     }
 
-    function filterQATable() {
+    window.filterQATable = function() {
+      const query = document.getElementById('qa-search').value.toLowerCase();
+      const filtered = currentQAAttendees.filter(a => 
+        a.attendeeName.toLowerCase().includes(query) || 
+        (a.attendeeEmail && a.attendeeEmail.toLowerCase().includes(query))
+      );
+      renderQATable(filtered);
+    };
+
+    window.copyQRLink = async function() {
+      const link = document.getElementById('qa-att-link').textContent;
+      if (!link) return;
+      try {
+        await navigator.clipboard.writeText(link);
+        toast('Attendance link copied!', 'success');
+      } catch (err) {}
+    };
+
+    window.addManualAttendee = async function() {
       if (!QA_CURRENT_EVENT) return;
-      const eventId = QA_CURRENT_EVENT._id;
-      loadQAAttendees(eventId);
-    }
-
-    async function addManualAttendee() {
       const name = document.getElementById('qa-name').value.trim();
-      const roll = document.getElementById('qa-roll').value.trim().toUpperCase();
+      const email = document.getElementById('qa-email').value.trim();
+      const course = document.getElementById('qa-course').value.trim();
+      const college = document.getElementById('qa-college').value.trim();
+      const status = document.getElementById('qa-status').value;
       const errEl = document.getElementById('qa-manual-err');
       const btn = document.getElementById('qa-add-btn');
+
       errEl.style.display = 'none';
-      if (!QA_CURRENT_EVENT) { toast('Select an event first', 'warning'); return; }
-      if (!name) { errEl.textContent = 'Please enter a full name.'; errEl.style.display = ''; return; }
-      if (!roll) { errEl.textContent = 'Please enter a roll number.'; errEl.style.display = ''; return; }
+      if (!name) {
+        errEl.textContent = 'Name is required';
+        errEl.style.display = 'block';
+        return;
+      }
 
-      btn.disabled = true; btn.textContent = 'Adding...';
+      btn.disabled = true;
+      btn.textContent = 'Adding...';
 
       try {
-        const res = await apiFetch('/api/attendance', {
+        await apiFetch(`/api/v1/attendance/manual/${QA_CURRENT_EVENT._id}`, {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ eventId: QA_CURRENT_EVENT._id, name, rollNo: roll, method: 'manual' }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attendeeName: name, attendeeEmail: email, course, college, status })
         });
-        if (res.alreadyMarked || !res.success) throw new Error(res.message || 'Already marked');
-        toast('Attendee added!', 'success');
+        
         document.getElementById('qa-name').value = '';
-        document.getElementById('qa-roll').value = '';
-        await loadQAAttendees(QA_CURRENT_EVENT._id);
-      } catch(e) {
-        // Fallback: localStorage
-        const list = getLocalAtt(QA_CURRENT_EVENT._id);
-        if (list.some(a => a.rollNo === roll)) {
-          errEl.textContent = 'Roll number ' + roll + ' is already marked.';
-          errEl.style.display = '';
-        } else {
-          list.push({ name, rollNo: roll, markedAt: new Date().toISOString(), method: 'manual' });
-          saveLocalAtt(QA_CURRENT_EVENT._id, list);
-          renderQATable(list);
-          document.getElementById('qa-name').value = '';
-          document.getElementById('qa-roll').value = '';
-          toast('Attendee added (offline)', 'success');
-        }
+        document.getElementById('qa-email').value = '';
+        document.getElementById('qa-course').value = '';
+        document.getElementById('qa-college').value = '';
+        toast('Attendee added manually', 'success');
+        
+        await loadQATable(QA_CURRENT_EVENT._id);
+        
+        // Refresh dashboard KPIs in background
+        const dashRes = await apiFetch('/api/dashboard');
+        DASH_STATS = dashRes.data?.stats || DASH_STATS;
+        updateStatCards();
+      } catch (err) {
+        errEl.textContent = err.message || 'Failed to add attendee';
+        errEl.style.display = 'block';
       } finally {
-        btn.disabled = false; btn.innerHTML = 'Add Attendee';
+        btn.disabled = false;
+        btn.textContent = 'Add Attendee';
       }
-    }
+    };
 
-    async function removeQAAttendee(rollNo) {
-      if (!QA_CURRENT_EVENT) return;
-      if (!confirm('Remove ' + rollNo + '?')) return;
+    window.deleteAttendee = async function(attendanceId) {
+      if (!QA_CURRENT_EVENT || !confirm('Are you sure you want to remove this attendee?')) return;
       try {
-        await apiFetch('/api/attendance/' + QA_CURRENT_EVENT._id + '/' + rollNo, { method: 'DELETE' });
-        await loadQAAttendees(QA_CURRENT_EVENT._id);
-        toast('Attendee removed', 'info');
-      } catch(e) {
-        // Fallback localStorage
-        const list = getLocalAtt(QA_CURRENT_EVENT._id).filter(a => a.rollNo !== rollNo);
-        saveLocalAtt(QA_CURRENT_EVENT._id, list);
-        renderQATable(list);
-        toast('Attendee removed (offline)', 'info');
+        await apiFetch(`/api/v1/attendance/${QA_CURRENT_EVENT._id}/${attendanceId}`, { method: 'DELETE' });
+        toast('Attendee removed', 'success');
+        await loadQATable(QA_CURRENT_EVENT._id);
+        
+        // Refresh dashboard KPIs in background
+        const dashRes = await apiFetch('/api/dashboard');
+        DASH_STATS = dashRes.data?.stats || DASH_STATS;
+        updateStatCards();
+      } catch (err) {
+        toast(err.message || 'Failed to remove attendee', 'error');
       }
-    }
+    };
 
-    function copyQRLink() {
-      const link = document.getElementById('qa-att-link').textContent;
-      navigator.clipboard.writeText(link).then(() => toast('Link copied!', 'success'));
-    }
+    window.exportAttCSV = async function() {
+      if (!QA_CURRENT_EVENT) return;
+      const btn = document.querySelector('button[onclick="exportAttCSV()"]');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;"></span> Exporting...'; }
+      try {
+        // Use raw fetch — endpoint returns CSV text, not JSON
+        const res = await fetch(`${API_BASE}/api/v1/attendance/export/${QA_CURRENT_EVENT._id}`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`Export failed: HTTP ${res.status}`);
+        const csvText = await res.text();
+        const blob = new Blob([csvText], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", url);
+        dlAnchorElem.setAttribute("download", `attendance_${QA_CURRENT_EVENT.title || QA_CURRENT_EVENT._id}.csv`);
+        dlAnchorElem.click();
+        dlAnchorElem.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        toast('Failed to export attendance', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    };
 
-    function exportAttCSV() {
-      if (!QA_CURRENT_EVENT) { toast('Select an event first', 'warning'); return; }
-      const eventId = QA_CURRENT_EVENT._id;
-      // Try to get rows from DOM
-      const rows = document.querySelectorAll('#qa-tbody tr');
-      if (!rows.length) { toast('No attendees to export', 'warning'); return; }
-      let csv = 'No,Name,Roll No,Time,Method\n';
-      rows.forEach((row, i) => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length < 5) return;
-        const name   = cells[1].querySelector('div')?.textContent || '';
-        const roll   = cells[2].textContent.trim();
-        const time   = cells[3].textContent.trim().replace(/\n/g,' ');
-        const method = cells[4].textContent.trim();
-        csv += `${i+1},"${name}","${roll}","${time}","${method}"\n`;
-      });
-      dlReport('Attendance_' + escH(QA_CURRENT_EVENT.name).replace(/ /g,'_'), csv);
-      toast('Attendance exported!', 'success');
-    }
-
-
-    //  INIT 
+    //  INIT — Backend-enforced session validation (no localStorage check)
     (async function init() {
       document.body.style.opacity = '0';
       requestAnimationFrame(() => { document.body.style.transition='opacity 0.4s ease'; document.body.style.opacity='1'; });
-      if (!getToken()) { window.location.href = 'login.html'; return; }
+      // Validate session with backend — redirect if invalid/suspended/not-approved
+      const organizer = await guardSession();
+      if (!organizer) return; // guardSession handles redirect
       await loadAll();
       renderEvents();
       startAutoRefresh();

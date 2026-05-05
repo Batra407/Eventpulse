@@ -51,26 +51,22 @@ export async function updateReport() {
     if (total > 0 && responsesList) {
       responsesList.innerHTML = allFeedback.map((f) => {
         const evName = escapeHtml(f.eventName || eventNameMap[f.eventId] || '—');
-        const starColor = f.rating >= 4 ? 'var(--success)' : f.rating === 3 ? 'var(--warning)' : 'var(--danger)';
+        const starColor = f.overallRating >= 4 ? 'var(--success)' : f.overallRating === 3 ? 'var(--warning)' : 'var(--danger)';
         const date   = formatDate(f.createdAt);
         return `
           <div class="focus-list-item">
             <div class="focus-list-content">
               <div class="focus-list-title" style="display:flex; justify-content:space-between;">
                 ${evName}
-                <span style="color:var(--text-3); font-weight:500; font-size:13px;">${date} | NPS: ${f.nps || '—'}/10</span>
+                <span style="color:var(--text-3); font-weight:500; font-size:13px;">${date} | NPS: ${f.recommendationScore || '—'}/10</span>
               </div>
               <div style="font-weight:600; color:${starColor}; margin-bottom:4px; font-size:14px;">
-                ${'★'.repeat(f.rating)} ${f.rating}/5
+                ${'★'.repeat(f.overallRating)} ${f.overallRating}/5
               </div>
               <div class="focus-list-desc" style="color:var(--text-2); line-height:1.5;">
-                ${escapeHtml(f.comment || 'No comment provided.')}
+                ${escapeHtml(f.comments || 'No comment provided.')}
               </div>
-              ${f.suggestion ? `
-              <div style="margin-top:8px; padding:8px 12px; background:var(--surface-2); border-radius:6px; font-size:13px; color:var(--text-2);">
-                <span style="font-weight:600; color:var(--text); margin-right:4px;">Suggestion:</span>${escapeHtml(f.suggestion)}
-              </div>` : ''}
-              ${f.email ? `<div style="margin-top:6px; font-size:13px; color:var(--text-3);">${escapeHtml(f.email)}</div>` : ''}
+              ${f.attendeeEmail ? `<div style="margin-top:6px; font-size:13px; color:var(--text-3);">${escapeHtml(f.attendeeEmail)}</div>` : ''}
             </div>
           </div>`;
       }).join('');
@@ -115,10 +111,9 @@ export async function downloadReport() {
     allFeedback.forEach((f) => {
       const evName = f.eventName || eventNameMap[f.eventId] || 'Unknown Event';
       const date   = new Date(f.createdAt).toLocaleDateString();
-      lines.push(`\n[${date}] ${evName} — ${f.rating}/5 stars`);
-      lines.push(`Comment: ${f.comment || 'N/A'}`);
-      if (f.suggestion) lines.push(`Suggestion: ${f.suggestion}`);
-      lines.push(`NPS: ${f.nps}/10`);
+      lines.push(`\n[${date}] ${evName} — ${f.overallRating}/5 stars`);
+      lines.push(`Comment: ${f.comments || 'N/A'}`);
+      lines.push(`NPS: ${f.recommendationScore}/10`);
     });
 
     const a = document.createElement('a');

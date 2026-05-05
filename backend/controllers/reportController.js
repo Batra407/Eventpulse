@@ -37,10 +37,10 @@ const getReport = async (req, res) => {
   }
 
   const [analytics, aiAnalysis, feedbacks] = await Promise.all([
-    buildAnalytics(eventIds),
+    buildAnalytics(events),
     generateAIAnalysis(eventIds),
     Feedback.find({ eventId: { $in: eventIds } })
-      .select('eventId rating nps contentScore categories comment suggestion email createdAt')
+      .select('eventId overallRating recommendationScore selectedTags comments attendeeEmail createdAt')
       .sort({ createdAt: -1 })
       .lean(),
   ]);

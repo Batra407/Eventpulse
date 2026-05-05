@@ -59,7 +59,7 @@ export async function updateDashboard() {
     const ai = aiData.data;
 
     // Build event name map
-    (orgEvents || []).forEach((e) => { eventNameMap[e._id] = e.name; });
+    (orgEvents || []).forEach((e) => { eventNameMap[e._id] = e.title; });
 
     const total    = stats.totalResponses || 0;
     const avgRat   = total > 0 ? (stats.avgRating || 0) : 0;
@@ -122,6 +122,20 @@ export async function updateDashboard() {
 
     // ── Event filter dropdown ──
     populateEventFilter(orgEvents || []);
+    
+    // ── QR Attendance Event Dropdown ──
+    const escapeHtml = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const qaSel = document.getElementById('qa-event-sel');
+    if (qaSel) {
+      const attEvents = (orgEvents || []).filter(e => e.attendanceEnabled);
+      if (attEvents.length === 0) {
+        qaSel.innerHTML = '<option value="">No events with attendance enabled</option>';
+      } else {
+        qaSel.innerHTML = '<option value="">-- Choose an event --</option>' + attEvents.map(e =>
+          `<option value="${e._id}">${escapeHtml(e.title || e.name || 'Unnamed Event')}</option>`
+        ).join('');
+      }
+    }
 
     // ── Feedback Table ──
     const histRes = await apiFetch('/api/history?limit=100');
@@ -141,9 +155,9 @@ export async function updateDashboard() {
     } else {
       tbody.innerHTML = all.map((f) => {
         const evName = escapeHtml(f.eventName || eventNameMap[f.eventId] || '—');
-        const ratingColor = f.rating >= 4 ? 'var(--success)' : f.rating === 3 ? 'var(--warning)' : 'var(--danger)';
+        const ratingColor = f.overallRating >= 4 ? 'var(--success)' : f.overallRating === 3 ? 'var(--warning)' : 'var(--danger)';
         const date  = formatDate(f.createdAt);
-        const stars = '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
+        const stars = '★'.repeat(f.overallRating) + '☆'.repeat(5 - f.overallRating);
         const sentiment = f.sentiment || 'neutral';
         const sentimentEmoji = sentiment === 'positive' ? '😊' : sentiment === 'negative' ? '😞' : '😐';
         return `
@@ -155,10 +169,10 @@ export async function updateDashboard() {
               </div>
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
                 <span style="font-size:0.875rem;font-weight:700;color:${ratingColor};letter-spacing:1px;">${stars}</span>
-                <span class="badge ${f.rating >= 4 ? 'badge-green' : f.rating === 3 ? 'badge-amber' : 'badge-red'}">${f.rating}/5</span>
+                <span class="badge ${f.overallRating >= 4 ? 'badge-green' : f.overallRating === 3 ? 'badge-amber' : 'badge-red'}">${f.overallRating}/5</span>
                 <span class="sentiment-badge ${sentiment}">${sentimentEmoji} ${sentiment}</span>
               </div>
-              <div class="list-item-body">${escapeHtml(f.comment || 'No comment provided.')}</div>
+              <div class="list-item-body">${escapeHtml(f.comments || 'No comment provided.')}</div>
             </div>
           </div>`;
       }).join('');
@@ -420,7 +434,7 @@ function populateEventFilter(events) {
   const current = select.value;
   select.innerHTML = '<option value="all">All Events</option>';
   events.forEach((e) => {
-    select.innerHTML += `<option value="${e._id}">${escapeHtml(e.name)}</option>`;
+    select.innerHTML += `<option value="${e._id}">${escapeHtml(e.title)}</option>`;
   });
   select.value = current || 'all';
 }
@@ -529,40 +543,45 @@ function renderCategoryChart(catData) {
   });
 }
 
-/* ── Auto-Refresh (15s polling) ─────────────────────────────────────────── */
+/* ── Auto-Refresh (Adaptive Polling + Backoff) ─────────────────────────── */
 
 let _pollTimer   = null;
 let _pollRunning = false;
+let _errorCount  = 0;
 
 /**
- * Start the 15-second dashboard auto-refresh poll.
- * Safe to call multiple times — runs only one timer at a time.
- * Pauses automatically when the browser tab is hidden.
+ * Start adaptive dashboard auto-refresh poll.
+ * Phase 34 & 54: Memory leak prevention, deduplication, exponential backoff.
  */
 export function startDashboardPoll() {
   if (_pollRunning) return;
   _pollRunning = true;
 
-  const INTERVAL = 15_000; // 15 seconds
+  const BASE_INTERVAL = 15_000; // 15 seconds
 
   const poll = async () => {
-    // Skip refresh if tab is not visible (saves API calls)
-    if (document.visibilityState !== 'visible') return;
+    // Phase 54: Pause when tab hidden
+    if (document.visibilityState !== 'visible') {
+      scheduleNext(BASE_INTERVAL);
+      return;
+    }
 
     try {
-      const dashData = await apiFetch('/api/dashboard');
-      const { stats, ratingDistribution } = dashData.data || {};
+      // Use v1 endpoint
+      const dashData = await apiFetch('/api/v1/dashboard');
+      const { stats } = dashData.data || {};
+      _errorCount = 0; // reset backoff on success
 
-      // ── Silently update KPI numbers (no skeleton flash) ──
+      // ── Silently update KPI numbers ──
       const total    = stats?.totalResponses || 0;
-      const avgRat   = stats?.avgRating       || 0;
-      const npsScore = stats?.avgNPS          || 0;
+      const attendees= stats?.totalAttendees || 0;
+      const avgRat   = stats?.avgRating      || 0;
+      const npsScore = stats?.avgNPS         || 0;
 
       const kpiTotalEl = document.getElementById('kpi-total');
       const kpiAvgEl   = document.getElementById('kpi-avg');
       const kpiNpsEl   = document.getElementById('kpi-nps');
 
-      // Only update if the value actually changed to avoid unnecessary repaints
       if (kpiTotalEl && parseInt(kpiTotalEl.textContent) !== total) {
         const { countUp } = await import('./ui.js');
         countUp(kpiTotalEl, total, 600);
@@ -573,47 +592,237 @@ export function startDashboardPoll() {
         countUp(kpiNpsEl, npsScore, 700);
       }
 
-      // ── Update Live badge timestamp ──
       renderLiveBadge();
-
-      // ── Flash activity on a random feedback item if new responses came in ──
-      const items = document.querySelectorAll('.preview-item');
-      if (items.length && total > 0) {
-        const idx  = Math.floor(Math.random() * items.length);
-        const item = items[idx];
-        item.classList.remove('flashing');
-        void item.offsetWidth;
-        item.classList.add('flashing');
-        item.addEventListener('animationend', () => item.classList.remove('flashing'), { once: true });
-      }
+      
+      scheduleNext(BASE_INTERVAL);
 
     } catch (err) {
-      // Silent fail — don't interrupt the user's session for a background poll
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug('[Auto-refresh] Poll failed silently:', err.message);
-      }
+      _errorCount++;
+      // Exponential backoff: max out at ~2 minutes
+      const backoff = Math.min(BASE_INTERVAL * Math.pow(2, _errorCount), 120_000);
+      console.debug(`[Auto-refresh] Poll failed. Backing off for ${backoff}ms`, err.message);
+      scheduleNext(backoff);
     }
+  };
+
+  const scheduleNext = (delay) => {
+    if (!_pollRunning) return;
+    if (_pollTimer) clearTimeout(_pollTimer);
+    _pollTimer = setTimeout(poll, delay);
   };
 
   // Listen for tab visibility changes
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      // Immediately poll when tab becomes active again
+    if (document.visibilityState === 'visible' && _pollRunning) {
+      if (_pollTimer) clearTimeout(_pollTimer);
       poll();
     }
   });
 
-  _pollTimer = setInterval(poll, INTERVAL);
+  scheduleNext(BASE_INTERVAL);
 }
 
 /**
- * Stop the auto-refresh poll (e.g., on logout or page leave).
+ * Phase 34: Stop polling and clean up memory on unmount
  */
 export function stopDashboardPoll() {
+  _pollRunning = false;
   if (_pollTimer) {
-    clearInterval(_pollTimer);
-    _pollTimer   = null;
-    _pollRunning = false;
+    clearTimeout(_pollTimer);
+    _pollTimer = null;
   }
 }
 
+/* ── QR Attendance Logic ─────────────────────────────────────────────────── */
+
+let currentQAEvent = null;
+let currentQAAttendees = [];
+
+window.onQAEventChange = async function() {
+  const sel = document.getElementById('qa-event-sel');
+  const eventId = sel.value;
+  if (!eventId) {
+    document.getElementById('qa-no-event').style.display = 'block';
+    document.getElementById('qa-disabled-msg').style.display = 'none';
+    document.getElementById('qa-content').style.display = 'none';
+    document.getElementById('qa-att-badge').style.display = 'none';
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`/api/v1/events/${eventId}`);
+    currentQAEvent = res.data;
+    
+    document.getElementById('qa-no-event').style.display = 'none';
+
+    if (!currentQAEvent.attendanceEnabled) {
+      document.getElementById('qa-disabled-msg').style.display = 'block';
+      document.getElementById('qa-content').style.display = 'none';
+      document.getElementById('qa-att-badge').style.display = 'none';
+    } else {
+      document.getElementById('qa-disabled-msg').style.display = 'none';
+      document.getElementById('qa-content').style.display = 'block';
+      document.getElementById('qa-att-badge').style.display = 'block';
+
+      // Setup QR Image and Link
+      const qrCanvas = document.getElementById('qa-qr-canvas');
+      const linkDiv = document.getElementById('qa-att-link');
+      if (currentQAEvent.qrCode) {
+        qrCanvas.innerHTML = `<img src="${currentQAEvent.qrCode}" style="max-width:100%; border-radius:8px;" />`;
+      }
+      if (currentQAEvent.attendanceLink) {
+        linkDiv.textContent = window.location.origin + currentQAEvent.attendanceLink;
+      }
+
+      await loadQATable(eventId);
+    }
+  } catch (err) {
+    const { toastError } = await import('./toast.js');
+    toastError(err.message || 'Failed to load event details');
+  }
+};
+
+async function loadQATable(eventId) {
+  try {
+    const res = await apiFetch(`/api/v1/attendance/${eventId}`);
+    // API returns { success, data: { eventId, eventName, total, page, pages, attendees: [] } }
+    currentQAAttendees = res.data?.attendees || [];
+    renderQATable(currentQAAttendees);
+  } catch (err) {
+    console.error('Failed to load attendees', err);
+  }
+}
+
+function renderQATable(attendees) {
+  const tbody = document.getElementById('at-body');
+  const totalEl = document.getElementById('qa-total');
+  const emptyEl = document.getElementById('at-empty');
+
+  totalEl.textContent = attendees.length;
+
+  if (attendees.length === 0) {
+    tbody.innerHTML = '';
+    emptyEl.style.display = 'block';
+  } else {
+    emptyEl.style.display = 'none';
+    tbody.innerHTML = attendees.map((a, i) => `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+        <td style="padding:14px 18px;font-size:12px;color:#fff;">${i + 1}</td>
+        <td style="padding:14px 14px;font-size:12px;color:#fff;font-weight:600;">${escapeHtml(a.attendeeName)}</td>
+        <td style="padding:14px 14px;font-size:12px;color: #44403c;">${escapeHtml(a.attendeeEmail)}</td>
+        <td style="padding:14px 14px;font-size:12px;">
+          <span style="display:inline-block;padding:4px 10px;border-radius:99px;font-weight:600;font-size:10px;text-transform:capitalize;
+            ${a.status === 'present' ? 'background:rgba(52,211,153,0.15);color:#34d399;' : 
+              a.status === 'absent' ? 'background:rgba(248,113,113,0.15);color:#f87171;' : 
+              'background:rgba(251,191,36,0.15);color:#fbbf24;'}">
+            ${a.status}
+          </span>
+        </td>
+        <td style="padding:14px 14px;font-size:12px;color: #44403c;">${new Date(a.markedAt || a.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
+        <td style="padding:14px 14px;text-align:center;">
+          <span style="font-size:10px;font-weight:700;color: #44403c;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;text-transform:uppercase;">
+            ${a.attendanceType || '—'}
+          </span>
+        </td>
+        <td style="padding:14px 18px;text-align:right;">
+          <button onclick="deleteAttendee('${a._id}')" class="bs" style="padding:4px 8px;font-size:11px;color:#f87171;border-color:rgba(248,113,113,0.3);">Remove</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+}
+
+window.filterQATable = function() {
+  const query = document.getElementById('qa-search').value.toLowerCase();
+  const filtered = currentQAAttendees.filter(a => 
+    a.attendeeName.toLowerCase().includes(query) || 
+    a.attendeeEmail.toLowerCase().includes(query)
+  );
+  renderQATable(filtered);
+};
+
+window.copyQRLink = async function() {
+  const link = document.getElementById('qa-att-link').textContent;
+  if (!link) return;
+  try {
+    await navigator.clipboard.writeText(link);
+    const { toastSuccess } = await import('./toast.js');
+    toastSuccess('Attendance link copied!');
+  } catch (err) {}
+};
+
+window.addManualAttendee = async function() {
+  if (!currentQAEvent) return;
+  const name = document.getElementById('qa-name').value.trim();
+  const email = document.getElementById('qa-email').value.trim();
+  const status = document.getElementById('qa-status').value;
+  const errEl = document.getElementById('qa-manual-err');
+  const btn = document.getElementById('qa-add-btn');
+
+  errEl.style.display = 'none';
+  if (!name || !email) {
+    errEl.textContent = 'Name and email are required';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding...';
+
+  try {
+    await apiFetch(`/api/v1/attendance/manual/${currentQAEvent._id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attendeeName: name, attendeeEmail: email, status })
+    });
+    
+    document.getElementById('qa-name').value = '';
+    document.getElementById('qa-email').value = '';
+    const { toastSuccess } = await import('./toast.js');
+    toastSuccess('Attendee added manually');
+    
+    await loadQATable(currentQAEvent._id);
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to add attendee';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Add Attendee';
+  }
+};
+
+window.deleteAttendee = async function(attendanceId) {
+  if (!currentQAEvent || !confirm('Are you sure you want to remove this attendee?')) return;
+  try {
+    await apiFetch(`/api/v1/attendance/${currentQAEvent._id}/${attendanceId}`, { method: 'DELETE' });
+    const { toastSuccess } = await import('./toast.js');
+    toastSuccess('Attendee removed');
+    await loadQATable(currentQAEvent._id);
+  } catch (err) {
+    const { toastError } = await import('./toast.js');
+    toastError(err.message || 'Failed to remove attendee');
+  }
+};
+
+window.exportAttCSV = async function() {
+  if (!currentQAEvent) return;
+  const btn = document.querySelector('button[onclick="exportAttCSV()"]');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;"></span> Exporting...';
+  try {
+    const res = await apiFetch(`/api/v1/attendance/export/${currentQAEvent._id}`);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.data, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `attendance_${currentQAEvent._id}.json`);
+    dlAnchorElem.click();
+    dlAnchorElem.remove();
+  } catch (err) {
+    const { toastError } = await import('./toast.js');
+    toastError('Failed to export attendance');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+};

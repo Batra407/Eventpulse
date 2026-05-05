@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Scanner — EventPulse</title>
+  <meta name="description" content="Organizer QR scanner to instantly mark event attendance." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- html5-qrcode library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f0e13;
+      --surface: #1a1825;
+      --border:  rgba(255,255,255,0.08);
+      --amber:   #fbbf24;
+      --amber2:  #d97706;
+      --green:   #34d399;
+      --red:     #f87171;
+      --text:    #fafaf9;
+      --muted:   #78716c;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+    }
+
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .logo-mark {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 18px; font-weight: 800; }
+    .header span { font-size: 12px; color: var(--muted); display: block; margin-top: 1px; }
+    .back-btn {
+      margin-left: auto;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.13); }
+
+    /* ── Event Selector Card ── */
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .g-sel {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+    }
+    .g-sel:focus { border-color: rgba(251,191,36,0.5); }
+    .g-sel option { background: #1a1825; }
+
+    /* ── Scanner Viewport ── */
+    #scanner-wrap {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin-bottom: 16px;
+      position: relative;
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #reader {
+      width: 100% !important;
+    }
+    #reader video {
+      border-radius: 0 !important;
+      width: 100% !important;
+    }
+    /* Override html5-qrcode default red border */
+    #reader__scan_region > img,
+    #reader__scan_region > div {
+      border: 3px solid var(--amber) !important;
+    }
+
+    /* ── Scanner idle placeholder ── */
+    .scanner-idle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 48px 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .scanner-idle svg { opacity: 0.35; }
+    .scanner-idle p { font-size: 13px; }
+
+    /* ── Scan Status Banner ── */
+    #scan-status {
+      width: 100%;
+      max-width: 480px;
+      display: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      align-items: center;
+      gap: 10px;
+    }
+    #scan-status.success {
+      display: flex;
+      background: rgba(52,211,153,0.12);
+      border: 1px solid rgba(52,211,153,0.3);
+      color: var(--green);
+    }
+    #scan-status.error {
+      display: flex;
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--red);
+    }
+    #scan-status.info {
+      display: flex;
+      background: rgba(251,191,36,0.1);
+      border: 1px solid rgba(251,191,36,0.25);
+      color: var(--amber);
+    }
+    #scan-status-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* ── Controls ── */
+    .controls {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .btn-primary {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: linear-gradient(135deg, var(--amber), var(--amber2));
+      color: #1c1917;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      transition: background 0.2s;
+    }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.11); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Attendance Log ── */
+    .log-header {
+      width: 100%;
+      max-width: 480px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #log-count {
+      background: rgba(251,191,36,0.15);
+      color: var(--amber);
+      border-radius: 99px;
+      padding: 2px 9px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    #scan-log {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .log-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .log-dot.ok  { background: var(--green); }
+    .log-dot.dup { background: var(--amber); }
+    .log-dot.err { background: var(--red); }
+    .log-name { font-size: 13px; font-weight: 600; }
+    .log-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Permission Denied UI ── */
+    #perm-denied {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 14px;
+      padding: 28px 24px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    #perm-denied h3 { font-size: 15px; color: var(--red); margin-bottom: 8px; }
+    #perm-denied p  { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+
+    /* ── No event selected hint ── */
+    #no-event-hint {
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      padding: 14px;
+      font-size: 12.5px;
+      color: var(--muted);
+      display: none;
+    }
+
+    /* Scrollbar */
+    #scan-log::-webkit-scrollbar { width: 4px; }
+    #scan-log::-webkit-scrollbar-track { background: transparent; }
+    #scan-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-mark">
+      <svg width="16" height="16" fill="none" stroke="#1c1917" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
+    <div>
+      <h1>QR Scanner</h1>
+      <span>Mark attendance via camera</span>
+    </div>
+    <a href="dashboard.html" class="back-btn">← Dashboard</a>
+  </div>
+
+  <!-- Event Selector -->
+  <div class="card">
+    <div class="card-label">Select Event</div>
+    <select id="event-sel" class="g-sel" onchange="onEventChange()">
+      <option value="">Loading events…</option>
+    </select>
+  </div>
+
+  <!-- Hint when no event selected -->
+  <div id="no-event-hint">Select an event above to enable the scanner.</div>
+
+  <!-- Permission Denied UI -->
+  <div id="perm-denied">
+    <h3>📷 Camera Access Required</h3>
+    <p>
+      Please allow camera access in your browser settings and reload this page.<br/>
+      On mobile, ensure the site is served over HTTPS.
+    </p>
+  </div>
+
+  <!-- Scanner Viewport -->
+  <div id="scanner-wrap">
+    <div class="scanner-idle" id="scanner-idle">
+      <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="5" height="5" rx="1"/>
+        <rect x="16" y="3" width="5" height="5" rx="1"/>
+        <rect x="3" y="16" width="5" height="5" rx="1"/>
+        <path d="M21 16h-5v5M21 21v.01M11 3H8M3 11V8M11 8V3M8 11h3M3 16v-3M11 16v3M16 11h-3M16 8v3"/>
+      </svg>
+      <p>Choose an event and tap <strong>Start Scanner</strong></p>
+    </div>
+    <div id="reader"></div>
+  </div>
+
+  <!-- Scan Status Banner -->
+  <div id="scan-status">
+    <span id="scan-status-icon"></span>
+    <span id="scan-status-msg"></span>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-primary"   id="btn-start" onclick="startScanner()" disabled>Start Scanner</button>
+    <button class="btn-secondary" id="btn-stop"  onclick="stopScanner()"  disabled>Stop</button>
+  </div>
+
+  <!-- Scan Log -->
+  <div class="log-header">
+    <span>Scan Log</span>
+    <span id="log-count">0</span>
+  </div>
+  <div id="scan-log"></div>
+
+  <script type="module">
+    /* ─────────────────────────────────────────────────────────────────────
+       EventPulse QR Attendance Scanner
+       • Uses html5-qrcode for camera-based QR scanning
+       • Calls /api/v1/attendance (public endpoint) to mark attendance
+       • Duplicate scan prevention via Set in memory
+       ───────────────────────────────────────────────────────────────────── */
+
+    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:5000'
+      : location.origin;
+
+    const SCAN_COOLDOWN_MS = 3000; // prevent rapid re-scans of same QR
+    const scannedEmails    = new Set();
+    let   lastScanTime     = 0;
+    let   html5QrCode      = null;
+    let   currentEvent     = null;
+    let   logCount         = 0;
+    let   scannerRunning   = false;
+
+    // ── Load attendance-enabled events on page load ──────────────────────
+    async function loadEvents() {
+      const sel = document.getElementById('event-sel');
+      try {
+        // Requires organizer session cookie
+        const res  = await fetch(`${API_BASE}/api/v1/dashboard`, { credentials: 'include' });
+        if (res.status === 401 || res.status === 403) {
+          location.replace('/author-login.html');
+          return;
+        }
+        if (!res.ok) throw new Error('Failed to load dashboard');
+        const json = await res.json();
+        const events = (json?.data?.events || []).filter(e => e.attendanceEnabled);
+
+        if (!events.length) {
+          sel.innerHTML = '<option value="">No events with attendance enabled</option>';
+          return;
+        }
+        sel.innerHTML = '<option value="">-- Choose an event --</option>' +
+          events.map(e =>
+            `<option value="${e._id}" data-title="${escHtml(e.title || e.name || 'Unnamed')}"
+               data-token="${e.attendanceToken || ''}">${escHtml(e.title || e.name || 'Unnamed Event')}</option>`
+          ).join('');
+      } catch (err) {
+        sel.innerHTML = `<option value="">Error: ${err.message}</option>`;
+      }
+    }
+
+    window.onEventChange = function() {
+      const sel = document.getElementById('event-sel');
+      const opt = sel.options[sel.selectedIndex];
+      if (!sel.value) {
+        currentEvent = null;
+        document.getElementById('btn-start').disabled  = true;
+        document.getElementById('no-event-hint').style.display = 'block';
+        stopScanner();
+        return;
+      }
+      currentEvent = {
+        id:    sel.value,
+        title: opt.dataset.title || 'Event',
+      };
+      document.getElementById('btn-start').disabled  = false;
+      document.getElementById('no-event-hint').style.display = 'none';
+      showStatus('info', `📅 Selected: ${currentEvent.title}`);
+    };
+
+    // ── Start camera scanner ─────────────────────────────────────────────
+    window.startScanner = async function() {
+      if (scannerRunning || !currentEvent) return;
+
+      document.getElementById('scanner-idle').style.display = 'none';
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-stop').disabled  = false;
+      document.getElementById('perm-denied').style.display = 'none';
+
+      html5QrCode = new Html5Qrcode('reader');
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras.length) throw new Error('No camera found on this device');
+
+        // Prefer back/environment camera on mobile
+        const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+
+        await html5QrCode.start(
+          cam.id,
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            disableFlip: false,
+          },
+          onScanSuccess,
+          /* onScanFailure — silently ignore partial reads */ () => {}
+        );
+        scannerRunning = true;
+        showStatus('info', '🎥 Camera active — point at attendee QR code');
+      } catch (err) {
+        document.getElementById('scanner-idle').style.display = 'flex';
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('btn-stop').disabled  = true;
+
+        if (err.message && (err.message.includes('Permission') || err.message.includes('NotAllowed'))) {
+          document.getElementById('perm-denied').style.display = 'block';
+          showStatus('error', '❌ Camera permission denied');
+        } else {
+          showStatus('error', `❌ Camera error: ${err.message}`);
+        }
+      }
+    };
+
+    // ── Stop scanner ─────────────────────────────────────────────────────
+    window.stopScanner = async function() {
+      if (html5QrCode && scannerRunning) {
+        try { await html5QrCode.stop(); } catch {}
+        try { html5QrCode.clear(); } catch {}
+        html5QrCode = null;
+      }
+      scannerRunning = false;
+      document.getElementById('btn-start').disabled = !currentEvent;
+      document.getElementById('btn-stop').disabled  = true;
+      document.getElementById('scanner-idle').style.display = 'flex';
+      showStatus('info', '⏹ Scanner stopped');
+    };
+
+    // ── Handle successful QR scan ────────────────────────────────────────
+    async function onScanSuccess(decodedText) {
+      const now = Date.now();
+      if (now - lastScanTime < SCAN_COOLDOWN_MS) return; // debounce
+      lastScanTime = now;
+
+      if (!currentEvent) {
+        showStatus('error', '❌ No event selected');
+        return;
+      }
+
+      const raw = decodedText.trim();
+
+      // ── Parse QR — it contains a URL, not a JWT ─────────────────────────
+      // Expected format: http://host/attendance.html?eventId=XXX&token=YYY
+      let parsedEventId = null;
+      let parsedToken   = null;
+      let isValidQR     = false;
+
+      try {
+        const url = new URL(raw);
+        parsedEventId = url.searchParams.get('eventId');
+        parsedToken   = url.searchParams.get('token');
+        isValidQR     = !!(parsedEventId && parsedToken);
+      } catch {
+        // Not a URL — may be a plain token string or invalid QR
+        isValidQR = false;
+      }
+
+      if (!isValidQR) {
+        showStatus('error', '❌ Invalid QR — not an EventPulse attendance code');
+        addLog('err', 'Unknown QR', raw.slice(0, 40), 'err');
+        return;
+      }
+
+      // ── Event validation ─────────────────────────────────────────────────
+      if (parsedEventId !== currentEvent.id) {
+        showStatus('error', `⚠️ This QR belongs to a different event! Expected: ${currentEvent.title}`);
+        addLog('err', 'Wrong event QR', `eventId mismatch: got ${parsedEventId}`, 'err');
+        return;
+      }
+
+      // ── Build attendance page URL and open it ───────────────────────────
+      // The organizer scans the QR → we open the attendance form for the attendee
+      // This is the correct UX: attendee fills their own details on the public form
+      const attendanceUrl = `${location.origin}/attendance.html?eventId=${parsedEventId}&token=${encodeURIComponent(parsedToken)}`;
+
+      showStatus('success', `✅ Valid QR for ${currentEvent.title} — opening attendance form…`);
+      addLog('ok', currentEvent.title, `QR validated · Opening form`, 'ok');
+
+      // Small delay so the success status is visible before navigation
+      setTimeout(() => {
+        window.open(attendanceUrl, '_blank');
+      }, 800);
+    }
+
+    // ── UI helpers ───────────────────────────────────────────────────────
+    function showStatus(type, msg) {
+      const el   = document.getElementById('scan-status');
+      const icon = document.getElementById('scan-status-icon');
+      const msgEl = document.getElementById('scan-status-msg');
+      el.className = type;  // 'success' | 'error' | 'info'
+      msgEl.textContent = msg;
+      el.style.display = 'flex';
+      if (type !== 'info') {
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+      }
+    }
+
+    function addLog(type, name, meta, dotClass) {
+      const log  = document.getElementById('scan-log');
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `
+        <div class="log-dot ${dotClass}"></div>
+        <div>
+          <div class="log-name">${escHtml(name)}</div>
+          <div class="log-meta">${escHtml(meta)} &nbsp;·&nbsp; ${time}</div>
+        </div>`;
+      log.insertBefore(entry, log.firstChild);
+      logCount++;
+      document.getElementById('log-count').textContent = logCount;
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────
+    loadEvents();
+  </script>
+</body>
+</html>

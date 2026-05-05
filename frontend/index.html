@@ -92,8 +92,8 @@
 
       <!-- Auth buttons -->
       <div class="hidden md:flex items-center gap-3 ml-auto" id="nav-auth-area">
-        <a href="login.html" class="bg-white border border-gray-200 px-5 py-2.5 rounded-full text-gray-700 text-sm font-semibold hover:bg-gray-50 transition duration-300 ease-in-out shadow-sm hover:shadow">Organizer Login</a>
-        <a href="register.html" class="bg-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-700 transition duration-300 ease-in-out shadow-md hover:shadow-lg">Get Started</a>
+        <a href="author-login.html" class="border border-black px-5 py-2.5 rounded-full text-black text-sm font-bold hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105 shadow-sm">Organizer Login</a>
+        <a href="register.html" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition duration-300 ease-in-out hover:scale-105 shadow-md">Get Started</a>
       </div>
 
       <!-- Hamburger -->
@@ -110,8 +110,8 @@
         <a href="pricing.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">Pricing</a>
         <a href="contact.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">Contact</a>
         <hr class="border-gray-200 my-2">
-        <a href="login.html" class="block text-gray-900 border border-gray-300 font-semibold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Organizer Login</a>
-        <a href="register.html" class="block text-white bg-black font-bold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Get Started Free</a>
+        <a href="author-login.html" class="block text-gray-900 border border-gray-300 font-semibold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Organizer Login</a>
+        <a href="register.html" class="block text-white bg-gradient-to-r from-violet-600 to-indigo-600 font-bold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Get Started Free</a>
       </div>
     </div>
   </nav>
@@ -148,7 +148,7 @@
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Leave Feedback
               </a>
-              <a href="login.html" class="border border-black px-8 py-4 rounded-full text-black font-bold text-sm hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105 shadow-sm flex items-center gap-2" id="dashboard-hero-btn">
+              <a href="author-login.html" class="border border-black px-8 py-4 rounded-full text-black font-bold text-sm hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105 shadow-sm flex items-center gap-2" id="dashboard-hero-btn">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                 Organizer Dashboard
               </a>
@@ -325,10 +325,10 @@
         <p class="text-gray-600 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">Join the new standard for academic feedback. Create an account, start your first event, and see the insights in minutes.</p>
         
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="register.html" class="bg-black text-white px-8 py-4 rounded-full font-bold text-base hover:opacity-80 transition duration-300 ease-in-out hover:scale-105 shadow-md" id="cta-register-btn">
+          <a href="register.html" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-8 py-4 rounded-full font-bold text-base hover:opacity-90 transition duration-300 ease-in-out hover:scale-105 shadow-md" id="cta-register-btn">
             Get Started Free
           </a>
-          <a href="login.html" class="border border-black px-8 py-4 rounded-full text-black font-bold text-base hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105" id="cta-login-btn">
+          <a href="author-login.html" class="border border-black px-8 py-4 rounded-full text-black font-bold text-base hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105" id="cta-login-btn">
             Organizer Sign In
           </a>
         </div>
@@ -340,7 +340,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 
-  <script type="module" src="js/main.js?v=8"></script>
+  <script type="module" src="js/main.js?v=10"></script>
   <script type="module" src="js/gsap-cinema.js?v=8"></script>
 
   <script type="module">
@@ -398,36 +398,76 @@
     </div>
   </footer>
 
-  <!-- ── Auth-aware navbar ── -->
+  <!-- ── Auth-aware navbar (cookie-based session check) ── -->
   <script>
-    (function initAuthNav() {
-      const token = localStorage.getItem('ep_token');
-      const org   = JSON.parse(localStorage.getItem('ep_organizer') || 'null');
-      const area  = document.getElementById('nav-auth-area');
+    (async function initAuthNav() {
+      const area = document.getElementById('nav-auth-area');
       if (!area) return;
-
-      if (token && org) {
+      try {
+        const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
+        if (!res.ok) return; // not logged in — default static nav already shown
+        const json = await res.json();
+        const org  = json.data;
+        if (!org || org.organizerStatus !== 'approved') return;
         const initial = (org.name || 'U')[0].toUpperCase();
         area.innerHTML = `
           <a href="dashboard.html" class="flex items-center gap-2 text-black hover:bg-black/5 text-sm font-bold px-4 py-2 rounded-full transition duration-300 ease-in-out">
-            <div class="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white text-xs flex-shrink-0">${initial}</div>
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs flex-shrink-0">${initial}</div>
             <span class="hidden sm:inline">${org.name.split(' ')[0]}</span>
           </a>
-          <a href="dashboard.html" class="bg-black text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-80 transition duration-300 ease-in-out shadow-sm">Dashboard</a>
+          <a href="dashboard.html" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-90 transition duration-300 ease-in-out shadow-sm">Dashboard</a>
           <button onclick="epLogout()" class="border border-gray-300 text-gray-700 hover:text-black hover:border-black text-sm font-semibold px-4 py-2.5 rounded-full transition duration-300 ease-in-out">Logout</button>`;
-
         const ctaReg = document.getElementById('cta-register-btn');
         const ctaLog = document.getElementById('cta-login-btn');
         if (ctaReg) { ctaReg.href = 'dashboard.html'; ctaReg.innerHTML = 'Go to Dashboard →'; }
         if (ctaLog) ctaLog.style.display = 'none';
-      }
+      } catch {}
     })();
 
-    function epLogout() {
-      localStorage.removeItem('ep_token');
-      localStorage.removeItem('ep_organizer');
+    async function epLogout() {
+      try { await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
       window.location.reload();
     }
+
+    // ── Fetch and Render Ongoing Events ──
+    (async function loadEvents() {
+      const grid = document.getElementById('events-grid');
+      if (!grid) return;
+      try {
+        const res = await fetch('/api/v1/events');
+        const json = await res.json();
+        const events = json.data?.events || [];
+        
+        if (events.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-500">
+              No ongoing events found. Check back later!
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = events.map(evt => {
+          const dateStr = new Date(evt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+          return `
+            <div class="bg-white/70 backdrop-blur-lg border border-white rounded-3xl p-8 shadow-md transition duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl cursor-pointer" onclick="window.location.href='feedback.html?eventId=${evt._id}'">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-bold uppercase tracking-widest text-violet-600">${evt.category || 'Event'}</span>
+                <span class="text-xs text-gray-400 font-semibold">${dateStr}</span>
+              </div>
+              <h3 class="text-xl font-bold text-black mb-2 line-clamp-2">${evt.title || evt.name || 'Unnamed Event'}</h3>
+              <p class="text-sm text-gray-600 line-clamp-3 mb-6">${evt.description || 'No description provided.'}</p>
+              <div class="flex items-center justify-between mt-auto">
+                <span class="text-xs font-bold text-gray-500">${evt.venue || 'TBA'}</span>
+                <span class="text-xs font-bold text-black bg-gray-100 px-3 py-1 rounded-full hover:bg-black hover:text-white transition">Provide Feedback →</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Failed to load events.</div>';
+      }
+    })();
   </script>
 </body>
 </html>

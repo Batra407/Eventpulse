@@ -1,68 +1,50 @@
 /**
- * auth.js — Authentication module.
- * Handles login, register, logout, and nav UI updates.
+ * auth.js — Organizer authentication module.
+ *
+ * IMPORTANT: Token storage has been migrated from localStorage to HttpOnly cookies.
+ * Cookies are set/cleared by the backend — this file no longer stores tokens.
+ *
+ * The frontend only:
+ *   - Calls backend APIs
+ *   - Reacts to backend responses
+ *   - Updates UI based on session state
+ *
+ * All permission decisions are enforced backend-side.
  */
 
 import { apiFetch }    from './api.js';
-import { showPage }    from './router.js';
 import { toastSuccess, toastError, toastInfo } from './toast.js';
 
-// ── State ───────────────────────────────────────────────────────────────────
+// ── Session ─────────────────────────────────────────────────────────────────
 
-/** Get the current auth token */
-export function getAuthToken() {
-  return localStorage.getItem('ep_token');
-}
+import { authStore } from './authStore.js';
 
-/** Get the current organizer info */
-export function getOrganizer() {
-  return JSON.parse(localStorage.getItem('ep_organizer') || 'null');
-}
-
-/** Persist auth session */
-function saveAuth(token, organizer) {
-  localStorage.setItem('ep_token', token);
-  localStorage.setItem('ep_organizer', JSON.stringify(organizer));
-  updateAuthUI();
-}
-
-/** Clear auth state */
-function clearAuth() {
-  localStorage.removeItem('ep_token');
-  localStorage.removeItem('ep_organizer');
-  updateAuthUI();
+export async function getSession() {
+  return authStore.getOrganizer();
 }
 
 // ── Nav UI ──────────────────────────────────────────────────────────────────
 
-/**
- * Update the nav bar to reflect the current auth state.
- */
-export function updateAuthUI() {
+export function updateAuthUI(organizer = authStore.getOrganizer()) {
   const area = document.getElementById('nav-auth-area');
   if (!area) return;
 
-  const token = getAuthToken();
-  const org   = getOrganizer();
-
-  if (token && org) {
+  if (organizer) {
+    const init = (organizer.name || 'U')[0].toUpperCase();
     area.innerHTML = `
-      <div class="navbar-user">
-        <span class="navbar-user-dot" aria-hidden="true"></span>
-        ${escapeHtml(org.name)}
-      </div>
-      <button class="btn btn-ghost btn-sm" data-action="logout" style="color:var(--text-3);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Log out
-      </button>`;
+      <a href="dashboard.html" class="flex items-center gap-2 text-black hover:bg-black/5 text-sm font-bold px-4 py-2 rounded-full transition duration-300 ease-in-out">
+        <div style="width:26px;height:26px;border-radius:9999px;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.75rem;font-weight:700;flex-shrink:0">${escapeHtml(init)}</div>
+        <span class="hidden sm:inline">${escapeHtml(organizer.name.split(' ')[0])}</span>
+      </a>
+      <a href="dashboard.html" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-weight:700;font-size:0.875rem;padding:10px 20px;border-radius:9999px;border:none;text-decoration:none;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Dashboard</a>
+      <button data-action="logout" style="border:1px solid #d1d5db;color:#6b7280;font-size:0.875rem;font-weight:600;padding:10px 16px;border-radius:9999px;background:transparent;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='#000';this.style.color='#000'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280'">Logout</button>`;
   } else {
     area.innerHTML = `
-      <a href="login.html" class="btn btn-secondary btn-sm">Organizer Login</a>
-      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>`;
+      <a href="author-login.html" style="border:2px solid #000;color:#000;font-weight:700;font-size:0.875rem;padding:10px 20px;border-radius:9999px;background:transparent;text-decoration:none;transition:all .2s" onmouseover="this.style.background='#000';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#000'">Organizer Login</a>
+      <a href="register.html" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-weight:700;font-size:0.875rem;padding:10px 20px;border-radius:9999px;border:none;text-decoration:none;box-shadow:0 4px 14px rgba(124,58,237,.3);transition:opacity .2s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">Get Started</a>`;
   }
 }
 
-/** Simple HTML escape for nav output */
 function escapeHtml(str) {
   if (!str) return '';
   const d = document.createElement('div');
@@ -70,50 +52,7 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
-// ── Login ───────────────────────────────────────────────────────────────────
-
-export async function doLogin() {
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
-  const btn      = document.getElementById('login-btn');
-
-  errEl.style.display = 'none';
-
-  if (!email || !password) {
-    errEl.textContent   = 'Please enter your email and password.';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Signing in…';
-
-  try {
-    // apiFetch returns { success, message, data: { token, organizer } }
-    const res = await apiFetch('/api/auth/login', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email, password }),
-    });
-    const { token, organizer } = res.data;
-
-    saveAuth(token, organizer);
-    document.getElementById('login-email').value    = '';
-    document.getElementById('login-password').value = '';
-    toastSuccess(`Welcome back, ${organizer.name}!`);
-    window.location.href = '/dashboard.html';
-  } catch (e) {
-    errEl.textContent   = e.message || 'Login failed.';
-    errEl.style.display = 'block';
-    toastError(e.message || 'Login failed');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
-  }
-}
-
-// ── Register ────────────────────────────────────────────────────────────────
+// ── Register ─────────────────────────────────────────────────────────────────
 
 export async function doRegister() {
   const name     = document.getElementById('reg-name').value.trim();
@@ -125,46 +64,39 @@ export async function doRegister() {
   errEl.style.display = 'none';
 
   if (!name || !email || !password) {
-    errEl.textContent   = 'Please fill in all fields.';
-    errEl.style.display = 'block';
-    return;
+    errEl.textContent = 'Please fill in all fields.'; errEl.style.display = 'block'; return;
   }
-
-  if (password.length < 6) {
-    errEl.textContent   = 'Password must be at least 6 characters.';
-    errEl.style.display = 'block';
-    return;
+  if (password.length < 8) {
+    errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return;
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Creating account…';
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Sending code…';
 
   try {
-    // apiFetch returns { success, message, data: { token, organizer } }
-    const res = await apiFetch('/api/auth/register', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ name, email, password }),
+    await apiFetch('/api/v1/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
     });
-    const { token, organizer } = res.data;
-
-    saveAuth(token, organizer);
-    toastSuccess('Account created successfully!');
-    window.location.href = '/dashboard.html';
+    toastSuccess('Account created! Awaiting admin approval.');
+    window.location.href = '/author-login.html';
   } catch (e) {
-    errEl.textContent   = e.message || 'Registration failed.';
-    errEl.style.display = 'block';
+    errEl.textContent = e.message || 'Registration failed.'; errEl.style.display = 'block';
     toastError(e.message || 'Registration failed');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Create Account';
+    btn.disabled = false; btn.textContent = 'Create Account';
   }
 }
 
-// ── Logout ──────────────────────────────────────────────────────────────────
+// ── Logout ───────────────────────────────────────────────────────────────────
 
-export function doLogout() {
-  clearAuth();
+export async function doLogout() {
+  try {
+    await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
+  } catch {}
+  authStore.logout();
   toastInfo('Logged out successfully');
-  window.location.href = '/index.html';
+  if (window.location.pathname.includes('dashboard') || window.location.pathname.includes('reports') || window.location.pathname.includes('history')) {
+    window.location.href = '/index.html';
+  }
 }

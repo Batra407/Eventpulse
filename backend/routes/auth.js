@@ -1,17 +1,20 @@
-const express = require('express');
-const router  = express.Router();
-const { register, login, getMe } = require('../controllers/authController');
-const { verifyToken }            = require('../middleware/authMiddleware');
-const asyncHandler               = require('../middleware/asyncHandler');
-const { validateRegister, validateLogin } = require('../middleware/validate');
+const express      = require('express');
+const router       = express.Router();
+const authController = require('../controllers/authController');
+const { verifyJWT, verifyOrganizer } = require('../middleware/authMiddleware');
+const asyncHandler = require('../middleware/asyncHandler');
 
-// POST /api/auth/register  — create organizer account
-router.post('/register', validateRegister, asyncHandler(register));
+// ── Public Auth ────────────────────────────────────────────────────────────
+router.post('/register', asyncHandler(authController.register));
+router.post('/login',    asyncHandler(authController.login));
+router.post('/refresh',  asyncHandler(authController.refreshToken));
 
-// POST /api/auth/login     — returns JWT
-router.post('/login', validateLogin, asyncHandler(login));
+// ── Protected Auth ─────────────────────────────────────────────────────────
+router.post('/logout',     verifyJWT, asyncHandler(authController.logout));
+router.post('/logout-all', verifyJWT, asyncHandler(authController.logoutAll));
 
-// GET  /api/auth/me        — returns current organizer profile (protected)
-router.get('/me', verifyToken, asyncHandler(getMe));
+// ── Profile & Requests ─────────────────────────────────────────────────────
+router.get('/me', verifyJWT, asyncHandler(authController.getMe));
+router.post('/request-access', verifyJWT, verifyOrganizer, asyncHandler(authController.requestAccess));
 
 module.exports = router;

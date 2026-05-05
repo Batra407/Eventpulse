@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — EventPulse</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f1a; --surface: #13162b; --surface2: #1a1f38; --border: rgba(255,255,255,0.07);
+      --accent: #7c3aed; --accent2: #4f46e5; --green: #22c55e; --red: #ef4444;
+      --yellow: #f59e0b; --text: #f1f5f9; --muted: #94a3b8; --card: #171b30;
+    }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+    /* Sidebar */
+    .sidebar { width:240px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+    .sidebar-logo { padding:28px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+    .logo-icon { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .logo-text { font-family:'Sora',sans-serif; font-size:17px; font-weight:800; }
+    .logo-badge { font-size:9px; font-weight:700; background:rgba(124,58,237,0.2); color:#a78bfa; padding:2px 6px; border-radius:4px; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-top:2px; }
+    .sidebar-nav { flex:1; padding:16px 12px; display:flex; flex-direction:column; gap:4px; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; border:none; background:none; width:100%; text-align:left; }
+    .nav-item:hover { background:rgba(255,255,255,0.05); color:var(--text); }
+    .nav-item.active { background:rgba(124,58,237,0.15); color:#c4b5fd; }
+    .sidebar-footer { padding:16px 12px; border-top:1px solid var(--border); }
+    .admin-badge { display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; background:var(--surface2); }
+    .admin-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; }
+    .admin-info { flex:1; min-width:0; }
+    .admin-name { font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .admin-role { font-size:10px; color:var(--muted); }
+    /* Main */
+    .main { margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+    .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+    .topbar-title { font-family:'Sora',sans-serif; font-size:20px; font-weight:800; }
+    .topbar-actions { display:flex; align-items:center; gap:12px; }
+    .btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.15s; }
+    .btn-sm { padding:6px 12px; font-size:12px; }
+    .btn-ghost { background:rgba(255,255,255,0.06); color:var(--muted); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.1); color:var(--text); }
+    .btn-success { background:rgba(34,197,94,0.15); color:var(--green); border:1px solid rgba(34,197,94,0.25); }
+    .btn-success:hover { background:rgba(34,197,94,0.25); }
+    .btn-danger  { background:rgba(239,68,68,0.12); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
+    .btn-danger:hover  { background:rgba(239,68,68,0.22); }
+    .btn-warn    { background:rgba(245,158,11,0.12); color:var(--yellow); border:1px solid rgba(245,158,11,0.2); }
+    .btn-warn:hover    { background:rgba(245,158,11,0.22); }
+    .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+    .btn-primary:hover { opacity:0.88; }
+    .btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .content { padding:28px 32px; flex:1; }
+    /* Stats row */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+    .stat-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:8px; }
+    .stat-val { font-size:28px; font-weight:800; font-family:'Sora',sans-serif; }
+    .stat-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+    /* Tabs */
+    .tabs { display:flex; gap:4px; margin-bottom:24px; background:var(--surface2); border-radius:12px; padding:4px; }
+    .tab { padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:none; color:var(--muted); transition:all 0.15s; }
+    .tab.active { background:rgba(124,58,237,0.2); color:#c4b5fd; }
+    /* Table */
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    thead th { padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); background:var(--surface2); text-align:left; border-bottom:1px solid var(--border); }
+    tbody td { padding:14px 16px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover { background:rgba(255,255,255,0.02); }
+    /* Badges */
+    .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+    .badge-pending  { background:rgba(245,158,11,0.12); color:var(--yellow); }
+    .badge-approved { background:rgba(34,197,94,0.12); color:var(--green); }
+    .badge-rejected { background:rgba(239,68,68,0.12); color:var(--red); }
+    .badge-suspended { background:rgba(156,163,175,0.12); color:#9ca3af; }
+    /* Loading spinner */
+    .spinner { display:inline-block; width:20px; height:20px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    /* Toast */
+    #toast-area { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+    .toast { background:var(--surface2); border:1px solid var(--border); padding:12px 16px; border-radius:12px; font-size:13px; font-weight:600; min-width:260px; animation:slideIn 0.25s ease; display:flex; align-items:center; gap:10px; }
+    @keyframes slideIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .toast-success { border-color:rgba(34,197,94,0.3); }
+    .toast-error   { border-color:rgba(239,68,68,0.3); }
+    .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+    .empty-icon { font-size:48px; margin-bottom:16px; }
+    .section { display:none; }
+    .section.active { display:block; }
+    .refresh-btn { font-size:18px; background:none; border:none; color:var(--muted); cursor:pointer; padding:4px 8px; border-radius:6px; }
+    .refresh-btn:hover { color:var(--text); background:rgba(255,255,255,0.06); }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">EventPulse</div>
+        <span class="logo-badge">Super Admin</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showSection('pending')" id="nav-pending">
+        <span>⏳</span> Pending Requests
+        <span id="pending-count-badge" class="badge badge-pending" style="margin-left:auto;display:none"></span>
+      </button>
+      <button class="nav-item" onclick="showSection('organizers')" id="nav-organizers">
+        <span>👥</span> All Organizers
+      </button>
+      <button class="nav-item" onclick="showSection('requests')" id="nav-requests">
+        <span>📋</span> All Requests
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-badge">
+        <div class="admin-avatar" id="admin-init">A</div>
+        <div class="admin-info">
+          <div class="admin-name" id="admin-name-text">Loading…</div>
+          <div class="admin-role">Super Admin</div>
+        </div>
+      </div>
+      <button onclick="doLogout()" class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Pending Requests</div>
+      <div class="topbar-actions">
+        <button class="refresh-btn" onclick="loadAll()" title="Refresh">↻</button>
+        <div id="loading-indicator" style="display:none"><span class="spinner"></span></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Organizers</div><div class="stat-val" id="s-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Approval</div><div class="stat-val" id="s-pending" style="color:var(--yellow)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-val" id="s-approved" style="color:var(--green)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Suspended</div><div class="stat-val" id="s-suspended" style="color:var(--red)">—</div></div>
+      </div>
+
+      <!-- Pending Requests Section -->
+      <div class="section active" id="sec-pending">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Organizer</th><th>Email</th><th>Registered</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="pending-tbody"><tr><td colspan="5" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- All Organizers Section -->
+      <div class="section" id="sec-organizers">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Organizer</th><th>Email</th><th>Status</th><th>Last Login</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="organizers-tbody"><tr><td colspan="5" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- All Requests Section -->
+      <div class="section" id="sec-requests">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Organizer</th><th>Email</th><th>Submitted</th><th>Status</th>
+            </tr></thead>
+            <tbody id="requests-tbody"><tr><td colspan="4" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-area"></div>
+
+  <script>
+    const API = '';
+    let adminUser = null;
+
+    // ── Toast ─────────────────────────────────────────────────────────────
+    function toast(msg, type='success') {
+      const area = document.getElementById('toast-area');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span> ${msg}`;
+      area.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
+    // ── Session guard ─────────────────────────────────────────────────────
+    async function guardAdmin() {
+      try {
+        const res  = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+        if (!res.ok) { window.location.replace('/author-login.html'); return null; }
+        const json = await res.json();
+        const user = json.data;
+        if (user.role !== 'superadmin') { window.location.replace('/author-login.html'); return null; }
+        return user;
+      } catch { window.location.replace('/author-login.html'); return null; }
+    }
+
+    // ── API helper ────────────────────────────────────────────────────────
+    async function api(method, path, body) {
+      const opts = { method, credentials: 'include', headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res  = await fetch(`${API}${path}`, opts);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`);
+      return json;
+    }
+
+    // ── Date helpers ──────────────────────────────────────────────────────
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : 'Never'; }
+
+    function statusBadge(org) {
+      if (org.isSuspended) return `<span class="badge badge-suspended">Suspended</span>`;
+      const map = { approved:'badge-approved', pending:'badge-pending', rejected:'badge-rejected', suspended:'badge-suspended' };
+      return `<span class="badge ${map[org.organizerStatus] || ''}">${org.organizerStatus}</span>`;
+    }
+
+    // ── Sections ──────────────────────────────────────────────────────────
+    const SECTIONS = { pending:'Pending Requests', organizers:'All Organizers', requests:'All Requests' };
+    function showSection(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(`sec-${name}`).classList.add('active');
+      document.getElementById(`nav-${name}`).classList.add('active');
+      document.getElementById('page-title').textContent = SECTIONS[name];
+    }
+
+    // ── Admin actions ─────────────────────────────────────────────────────
+    async function action(verb, id, label) {
+      if (!confirm(`${label} this organizer?`)) return;
+      try {
+        await api('POST', `/api/admin/${verb}/${id}`);
+        toast(`Organizer ${label.toLowerCase()}d`, 'success');
+        loadAll();
+      } catch (e) { toast(e.message, 'error'); }
+    }
+
+    const approve   = id => action('approve', id, 'Approve');
+    const reject    = id => action('reject', id, 'Reject');
+    const suspend   = id => action('suspend', id, 'Suspend');
+    const reinstate = id => action('reinstate', id, 'Reinstate');
+    const revoke    = id => action('revoke', id, 'Revoke');
+
+    // ── Render pending table ──────────────────────────────────────────────
+    function renderPending(organizers) {
+      const tbody = document.getElementById('pending-tbody');
+      const pending = organizers.filter(o => o.organizerStatus === 'pending' && !o.isSuspended);
+      if (!pending.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>No pending requests</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = pending.map(o => `
+        <tr>
+          <td><strong>${esc(o.name)}</strong></td>
+          <td style="color:var(--muted)">${esc(o.email)}</td>
+          <td style="color:var(--muted)">${fmtDate(o.createdAt)}</td>
+          <td>${statusBadge(o)}</td>
+          <td>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-success btn-sm" onclick="approve('${o._id}')">Approve</button>
+              <button class="btn btn-danger btn-sm"  onclick="reject('${o._id}')">Reject</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      // Update badge
+      const badge = document.getElementById('pending-count-badge');
+      badge.textContent = pending.length;
+      badge.style.display = pending.length ? '' : 'none';
+    }
+
+    // ── Render all organizers ─────────────────────────────────────────────
+    function renderOrganizers(organizers) {
+      const tbody = document.getElementById('organizers-tbody');
+      if (!organizers.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👥</div><p>No organizers found</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = organizers.map(o => {
+        const actions = o.isSuspended
+          ? `<button class="btn btn-success btn-sm" onclick="reinstate('${o._id}')">Reinstate</button>`
+          : o.organizerStatus === 'approved'
+            ? `<button class="btn btn-warn btn-sm" onclick="suspend('${o._id}')">Suspend</button>
+               <button class="btn btn-ghost btn-sm"  onclick="revoke('${o._id}')">Revoke</button>`
+            : o.organizerStatus === 'pending'
+              ? `<button class="btn btn-success btn-sm" onclick="approve('${o._id}')">Approve</button>
+                 <button class="btn btn-danger btn-sm"  onclick="reject('${o._id}')">Reject</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="revoke('${o._id}')">Re-review</button>`;
+        return `
+          <tr>
+            <td><strong>${esc(o.name)}</strong></td>
+            <td style="color:var(--muted)">${esc(o.email)}</td>
+            <td>${statusBadge(o)}</td>
+            <td style="color:var(--muted)">${fmtDate(o.lastLogin)}</td>
+            <td><div style="display:flex;gap:8px;flex-wrap:wrap">${actions}</div></td>
+          </tr>`;
+      }).join('');
+    }
+
+    // ── Render all requests ───────────────────────────────────────────────
+    function renderRequests(requests) {
+      const tbody = document.getElementById('requests-tbody');
+      if (!requests.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>No requests</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = requests.map(r => {
+        const org = r.organizerId || {};
+        const smap = { approved:'badge-approved', pending:'badge-pending', rejected:'badge-rejected' };
+        return `
+          <tr>
+            <td><strong>${esc(org.name || '—')}</strong></td>
+            <td style="color:var(--muted)">${esc(org.email || '—')}</td>
+            <td style="color:var(--muted)">${fmtDate(r.createdAt)}</td>
+            <td><span class="badge ${smap[r.status] || ''}">${r.status}</span></td>
+          </tr>`;
+      }).join('');
+    }
+
+    // ── Update stats ──────────────────────────────────────────────────────
+    function updateStats(organizers) {
+      document.getElementById('s-total').textContent = organizers.length;
+      document.getElementById('s-pending').textContent  = organizers.filter(o => o.organizerStatus === 'pending').length;
+      document.getElementById('s-approved').textContent = organizers.filter(o => o.organizerStatus === 'approved').length;
+      document.getElementById('s-suspended').textContent = organizers.filter(o => o.isSuspended).length;
+    }
+
+    // ── Load all data ─────────────────────────────────────────────────────
+    async function loadAll() {
+      document.getElementById('loading-indicator').style.display = '';
+      try {
+        const [orgRes, reqRes] = await Promise.all([
+          api('GET', '/api/admin/organizers'),
+          api('GET', '/api/admin/requests'),
+        ]);
+        const organizers = orgRes.data || [];
+        const requests   = reqRes.data || [];
+        updateStats(organizers);
+        renderPending(organizers);
+        renderOrganizers(organizers);
+        renderRequests(requests);
+      } catch (e) {
+        if (e.message.includes('403') || e.message.includes('401')) {
+          window.location.replace('/author-login.html');
+        } else {
+          toast('Failed to load data: ' + e.message, 'error');
+        }
+      } finally {
+        document.getElementById('loading-indicator').style.display = 'none';
+      }
+    }
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ── Logout ────────────────────────────────────────────────────────────
+    async function doLogout() {
+      try { await fetch(`${API}/api/auth/logout`, { method:'POST', credentials:'include' }); } catch {}
+      window.location.replace('/author-login.html');
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    (async () => {
+      adminUser = await guardAdmin();
+      if (!adminUser) return;
+      document.getElementById('admin-name-text').textContent = adminUser.name || 'Admin';
+      document.getElementById('admin-init').textContent = (adminUser.name || 'A')[0].toUpperCase();
+      await loadAll();
+    })();
+  </script>
+</body>
+</html>

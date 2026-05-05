@@ -3,170 +3,295 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pricing — EventPulse</title>
+  <title>Event Pricing — EventPulse</title>
+  <meta name="description" content="Browse live event joining fees set by organizers on EventPulse.">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    
-    /* ── Pastel Fluid Background ── */
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    
-    .bg-fluid-pastel {
-      background: radial-gradient(circle at 20% 30%, #bbf7d0, transparent 40%),
-                  radial-gradient(circle at 80% 20%, #fbcfe8, transparent 40%),
-                  radial-gradient(circle at 50% 80%, #fef3c7, transparent 40%);
-      background-color: #fafafa;
-      background-size: 200% 200%;
-      animation: gradientMove 15s ease infinite;
-    }
+    body{font-family:'Inter',sans-serif}
+    @keyframes gm{0%{background-position:0% 50%}50%{background-position:100% 50%}to{background-position:0% 50%}}
+    .bg-fp{background:radial-gradient(circle at 20% 30%,#bbf7d0,transparent 40%),radial-gradient(circle at 80% 20%,#fbcfe8,transparent 40%),radial-gradient(circle at 50% 80%,#fef3c7,transparent 40%);background-color:#fafafa;background-size:200% 200%;animation:gm 15s ease infinite}
+    .btn-v{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-weight:700;border-radius:9999px;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 18px rgba(124,58,237,.35)}
+    .btn-v:hover{transform:scale(1.05);box-shadow:0 6px 26px rgba(124,58,237,.45)}
+    .btn-k{background:#111;color:#fff;font-weight:700;border-radius:9999px;transition:transform .2s,opacity .2s}
+    .btn-k:hover{transform:scale(1.05);opacity:.85}
+    .ec{transition:transform .25s,box-shadow .25s}
+    .ec:hover{transform:translateY(-5px);box-shadow:0 16px 48px rgba(0,0,0,.10)}
+    @keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+    .au{animation:fu .45s ease both}
+    /* Profile dropdown */
+    #prof-drop{display:none}
+    #prof-wrap:hover #prof-drop,#prof-wrap:focus-within #prof-drop{display:block}
   </style>
-  <script>tailwind.config = { theme: { extend: { fontFamily: { sans:['Inter','sans-serif'], display:['Sora','sans-serif'] } } } }</script>
 </head>
-<body class="antialiased bg-fluid-pastel min-h-screen flex flex-col">
+<body class="bg-fp min-h-screen flex flex-col antialiased">
 
-  <!-- Navbar -->
-  <!-- Navbar -->
-  <nav class="bg-white/50 backdrop-blur-md border-b border-gray-100 flex-shrink-0 fixed top-0 w-full z-50 transition-all duration-300" id="main-nav" role="navigation" aria-label="Main navigation">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
-
-      <!-- Logo -->
-      <a href="index.html" class="flex items-center gap-2.5 flex-shrink-0" aria-label="EventPulse Home">
-        <div class="w-8 h-8 rounded-full bg-black flex items-center justify-center shadow-md">
-          <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        <span class="text-black font-bold text-lg tracking-tight hidden sm:block">EventPulse</span>
-      </a>
-
-      <!-- Desktop Links -->
-      <div class="hidden md:flex items-center gap-2 ml-4">
-        <a href="index.html" class="text-gray-600 hover:text-black font-semibold text-sm px-4 py-2 rounded-full hover:bg-white/40 transition duration-300 ease-in-out">Home</a>
-        <a href="about.html" class="text-gray-600 hover:text-black font-semibold text-sm px-4 py-2 rounded-full hover:bg-white/40 transition duration-300 ease-in-out">About</a>
-        <a href="pricing.html" class="text-black font-semibold text-sm px-4 py-2 rounded-full bg-white/40 shadow-sm transition duration-300 ease-in-out">Pricing</a>
-        <a href="contact.html" class="text-gray-600 hover:text-black font-semibold text-sm px-4 py-2 rounded-full hover:bg-white/40 transition duration-300 ease-in-out">Contact</a>
+<!-- ── Navbar ── -->
+<nav class="bg-white/50 backdrop-blur-md border-b border-gray-100 fixed top-0 w-full z-50">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
+    <a href="index.html" class="flex items-center gap-2 flex-shrink-0">
+      <div class="w-8 h-8 rounded-full bg-black flex items-center justify-center shadow">
+        <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       </div>
+      <span class="font-bold text-lg hidden sm:block">EventPulse</span>
+    </a>
+    <div class="hidden md:flex items-center gap-1 ml-4">
+      <a href="index.html"   class="text-gray-500 hover:text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-white/50 transition">Home</a>
+      <a href="about.html"   class="text-gray-500 hover:text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-white/50 transition">About</a>
+      <a href="pricing.html" class="text-black text-sm font-semibold px-4 py-2 rounded-full bg-white/50 shadow-sm">Pricing</a>
+      <a href="contact.html" class="text-gray-500 hover:text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-white/50 transition">Contact</a>
+    </div>
+    <!-- Auth area -->
+    <div class="hidden md:flex items-center gap-3 ml-auto" id="nav-auth-area">
+      <a href="author-login.html" class="border border-black px-5 py-2.5 rounded-full text-black text-sm font-bold hover:bg-black hover:text-white transition">Organizer Login</a>
+      <a href="register.html" class="btn-v px-5 py-2.5 text-sm inline-block">Get Started</a>
+    </div>
+    <button class="md:hidden ml-auto p-2 rounded-full hover:bg-black/5" id="ham-btn">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div id="mob-menu" class="hidden border-t border-gray-100 bg-white/80 backdrop-blur-md px-5 py-4 space-y-2">
+    <a href="index.html"   class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm">Home</a>
+    <a href="about.html"   class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm">About</a>
+    <a href="pricing.html" class="block text-black font-semibold px-4 py-3 rounded-xl bg-white shadow-sm text-sm">Pricing</a>
+    <a href="contact.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm">Contact</a>
+    <hr class="border-gray-200">
+    <a href="author-login.html" class="block text-center border border-gray-300 font-semibold px-4 py-3 rounded-xl text-sm">Organizer Login</a>
+    <a href="register.html" class="block text-center text-white bg-gradient-to-r from-violet-600 to-indigo-600 font-bold px-4 py-3 rounded-xl text-sm">Get Started Free</a>
+  </div>
+</nav>
 
-      <!-- Auth buttons -->
-      <div class="hidden md:flex items-center gap-3 ml-auto" id="nav-auth-area">
-        <a href="login.html" class="border border-black px-5 py-2.5 rounded-full text-black text-sm font-bold hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105 shadow-sm" id="cta-login-btn">Organizer Login</a>
-        <a href="register.html" class="bg-black text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-80 transition duration-300 ease-in-out hover:scale-105 shadow-md" id="cta-register-btn">Get Started</a>
-      </div>
+<!-- ── Main ── -->
+<main class="flex-grow pt-32 pb-20">
+  <div class="max-w-6xl mx-auto px-6">
 
-      <!-- Hamburger -->
-      <button class="md:hidden ml-auto text-black p-2 rounded-full hover:bg-black/5 transition duration-300" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" data-action="toggle-mobile-menu">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
+    <!-- Hero -->
+    <div class="text-center mb-14 au">
+      <span class="inline-block px-4 py-1.5 rounded-full bg-violet-100 text-violet-700 text-xs font-bold uppercase tracking-widest mb-4">Event-Based Pricing</span>
+      <h1 class="font-display font-black text-4xl lg:text-5xl text-gray-900 mb-4">Join events, not subscriptions</h1>
+      <p class="text-gray-500 text-lg max-w-xl mx-auto">Every event sets its own joining fee — declared by the organizer, displayed transparently. No platform cuts.</p>
     </div>
 
-    <!-- Mobile menu -->
-    <div id="mobile-menu" class="hidden border-t border-gray-100 bg-white/80 backdrop-blur-md">
-      <div class="px-5 py-5 space-y-2">
-        <a href="index.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">Home</a>
-        <a href="about.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">About</a>
-        <a href="pricing.html" class="block text-black font-semibold px-4 py-3 rounded-xl bg-white shadow-sm text-sm" role="menuitem">Pricing</a>
-        <a href="contact.html" class="block text-gray-600 font-semibold px-4 py-3 rounded-xl hover:bg-white/50 text-sm transition duration-300" role="menuitem">Contact</a>
-        <hr class="border-gray-200 my-2">
-        <a href="login.html" class="block text-gray-900 border border-gray-300 font-semibold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Organizer Login</a>
-        <a href="register.html" class="block text-white bg-black font-bold px-4 py-3 rounded-xl text-center text-sm transition duration-300" role="menuitem">Get Started Free</a>
+    <!-- How it works strip -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16 au" style="animation-delay:.08s">
+      <div class="bg-white/70 rounded-2xl p-5 flex gap-4 items-start shadow-sm">
+        <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-violet-100 flex items-center justify-center">
+          <svg width="18" height="18" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <p class="font-bold text-gray-800 text-sm">Organizer sets price</p>
+          <p class="text-gray-400 text-xs mt-1">Each author sets a joining fee per event in their dashboard.</p>
+        </div>
+      </div>
+      <div class="bg-white/70 rounded-2xl p-5 flex gap-4 items-start shadow-sm">
+        <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-emerald-100 flex items-center justify-center">
+          <svg width="18" height="18" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <p class="font-bold text-gray-800 text-sm">Users join &amp; pay</p>
+          <p class="text-gray-400 text-xs mt-1">Attendees log in and pay the fee to join an event.</p>
+        </div>
+      </div>
+      <div class="bg-white/70 rounded-2xl p-5 flex gap-4 items-start shadow-sm">
+        <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-amber-100 flex items-center justify-center">
+          <svg width="18" height="18" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div>
+          <p class="font-bold text-gray-800 text-sm">Revenue tracked live</p>
+          <p class="text-gray-400 text-xs mt-1">Real-time revenue = price × total users joined.</p>
+        </div>
       </div>
     </div>
-  </nav>
 
-  <!-- Pricing Content -->
-  <main class="flex-grow pt-32 pb-16">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center mb-16">
-        <h1 class="text-gray-900 font-display font-bold text-4xl lg:text-5xl mb-4">Simple, transparent pricing</h1>
-        <p class="text-gray-600 text-lg">No hidden fees. Choose the perfect plan for your academic events.</p>
+    <!-- Events grid -->
+    <div class="flex items-center gap-3 mb-6 au" style="animation-delay:.12s">
+      <h2 class="font-display font-bold text-2xl text-gray-900">Live Event Fees</h2>
+      <span class="flex h-2.5 w-2.5 relative ml-1">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+      </span>
+    </div>
+
+    <div id="ev-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white/60 rounded-2xl h-44 animate-pulse au"></div>
+      <div class="bg-white/60 rounded-2xl h-44 animate-pulse au" style="animation-delay:.07s"></div>
+      <div class="bg-white/60 rounded-2xl h-44 animate-pulse au" style="animation-delay:.14s"></div>
+    </div>
+
+    <div id="no-ev" class="hidden text-center py-20 au">
+      <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" fill="none" stroke="#d1d5db" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </div>
+      <p class="text-gray-400 font-semibold">No priced events yet.</p>
+      <p class="text-gray-300 text-sm mt-1">Organizers set event fees from their dashboard.</p>
+      <a href="register.html" class="btn-v inline-block mt-6 px-6 py-3 text-sm">Create an Event</a>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        <!-- Free Plan -->
-        <div class="bg-white rounded-2xl shadow-md p-8 hover:-translate-y-2 transition duration-300 flex flex-col">
-          <h3 class="text-gray-900 font-bold text-xl mb-2">Free Plan</h3>
-          <p class="text-gray-500 text-sm mb-6 flex-grow">Perfect for small meetups.</p>
-          <div class="mb-6 mb-8">
-            <span class="text-4xl font-bold text-gray-900">$0</span>
-            <span class="text-gray-500 text-sm">/mo</span>
-          </div>
-          <ul class="text-gray-600 text-sm space-y-4 mb-8">
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Basic feedback collection</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Limited events (Up to 3)</li>
-            <li class="flex items-center gap-2 text-gray-400"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> No analytics</li>
-          </ul>
-          <a href="register.html" class="w-full bg-black text-white px-6 py-3 rounded-xl hover:opacity-80 transition font-bold text-center mt-auto shadow-md">Get Started</a>
-        </div>
-
-        <!-- Pro Plan (Highlighted) -->
-        <div class="bg-white rounded-2xl shadow-xl p-8 transform scale-100 hover:scale-105 md:scale-105 md:hover:scale-110 transition duration-300 border-2 border-purple-500 relative flex flex-col">
-          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
-          <h3 class="text-gray-900 font-bold text-xl mb-2">Pro Plan</h3>
-          <p class="text-gray-500 text-sm mb-6 flex-grow">For growing academic organizations.</p>
-          <div class="mb-6 mb-8">
-            <span class="text-4xl font-bold text-gray-900">$29</span>
-            <span class="text-gray-500 text-sm">/mo</span>
-          </div>
-          <ul class="text-gray-600 text-sm space-y-4 mb-8">
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited events</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> AI insights & summaries</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> QR Attendance system</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Export CSV reports</li>
-          </ul>
-          <a href="register.html" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-purple-500 hover:to-indigo-500 transition font-bold text-center mt-auto shadow-lg shadow-purple-500/30">Start Free Trial</a>
-        </div>
-
-        <!-- Enterprise Plan -->
-        <div class="bg-white rounded-2xl shadow-md p-8 hover:-translate-y-2 transition duration-300 flex flex-col">
-          <h3 class="text-gray-900 font-bold text-xl mb-2">Enterprise Plan</h3>
-          <p class="text-gray-500 text-sm mb-6 flex-grow">Customized solutions for universities.</p>
-          <div class="mb-6 mb-8">
-            <span class="text-4xl font-bold text-gray-900">Custom</span>
-          </div>
-          <ul class="text-gray-600 text-sm space-y-4 mb-8">
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Everything in Pro</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Priority support</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom integrations</li>
-            <li class="flex items-center gap-2"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Dedicated account manager</li>
-          </ul>
-          <a href="contact.html" class="w-full bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-center mt-auto shadow-md">Contact Us</a>
-        </div>
-
+    <!-- Info banner -->
+    <div class="rounded-2xl border border-violet-100 bg-violet-50/70 p-5 flex gap-4 items-start au" style="animation-delay:.16s">
+      <div class="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+        <svg width="16" height="16" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <p class="font-bold text-violet-900 text-sm mb-1">Price declared by Organizer — no platform markup</p>
+        <p class="text-violet-500 text-sm">EventPulse never adds fees. What the organizer sets is what you pay. Revenue data is live and transparent.</p>
       </div>
     </div>
-  </main>
 
-  <script src="js/main.js" type="module"></script>
-  <script>
-    document.getElementById('hamburger-btn')?.addEventListener('click', () => {
-      const menu = document.getElementById('mobile-menu');
-      menu.classList.toggle('hidden');
-    });
-    
-    // Auth-aware nav logic
-    (function initAuthNav() {
-      const token = localStorage.getItem('ep_token');
-      const org   = JSON.parse(localStorage.getItem('ep_organizer') || 'null');
-      const area  = document.getElementById('nav-auth-area');
-      if (!area) return;
+  </div>
+</main>
 
-      if (token && org) {
-        const initial = (org.name || 'U')[0].toUpperCase();
-        area.innerHTML = `
-          <a href="dashboard.html" class="flex items-center gap-2 text-black hover:bg-black/5 text-sm font-bold px-4 py-2 rounded-full transition duration-300 ease-in-out">
-            <div class="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white text-xs flex-shrink-0">${initial}</div>
-            <span class="hidden sm:inline">${org.name.split(' ')[0]}</span>
+<script type="module">
+  import { openLoginModal } from './js/login-modal.js';
+
+  // ── Mobile menu ──────────────────────────────────────────────
+  document.getElementById('ham-btn')?.addEventListener('click', () =>
+    document.getElementById('mob-menu').classList.toggle('hidden'));
+
+  // ── Auth-aware nav ───────────────────────────────────────────
+  function buildAuthNav() {
+    const area  = document.getElementById('nav-auth-area');
+    if (!area) return;
+    const token = localStorage.getItem('ep_token');
+    const org   = JSON.parse(localStorage.getItem('ep_organizer') || 'null');
+    const role  = localStorage.getItem('ep_role') || 'author';
+    if (!token || !org) return; // keep defaults (login + get started)
+
+    const init = (org.name || 'U')[0].toUpperCase();
+    const roleLabel = role === 'author' ? 'Organizer' : 'User';
+    const roleCls   = role === 'author' ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700';
+
+    area.innerHTML = `
+      <div class="relative" id="prof-wrap" tabindex="0">
+        <button class="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-black/5 transition font-bold text-sm" id="prof-btn">
+          <div class="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">${init}</div>
+          <span class="hidden sm:inline">${org.name.split(' ')[0]}</span>
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="prof-drop" class="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+          <div class="px-4 py-2 border-b border-gray-100 mb-1">
+            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Signed in as</p>
+            <p class="text-sm font-bold text-gray-800 truncate">${org.email||org.name}</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold ${roleCls}">${roleLabel}</span>
+          </div>
+          <a href="dashboard.html" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-semibold transition">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
           </a>
-          <a href="dashboard.html" class="bg-black text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-80 transition duration-300 ease-in-out shadow-sm">Dashboard</a>
-          <button onclick="localStorage.removeItem('ep_token');localStorage.removeItem('ep_organizer');window.location.reload();" class="border border-gray-300 text-gray-700 hover:text-black hover:border-black text-sm font-semibold px-4 py-2.5 rounded-full transition duration-300 ease-in-out">Logout</button>`;
-      }
-    })();
-  </script>
+          <button id="sw-author-btn" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-violet-700 hover:bg-violet-50 font-semibold transition text-left">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Switch to Author
+          </button>
+          <a href="user-login.html" id="sw-user-btn" class="flex items-center gap-2 px-4 py-2.5 text-sm text-emerald-700 hover:bg-emerald-50 font-semibold transition">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Switch to User
+          </button>
+          <button onclick="(async function(){try{await fetch('/api/v1/auth/logout',{method:'POST',credentials:'include'});}catch{}location.reload();})()" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-semibold transition text-left">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </div>
+      </div>
+      <a href="dashboard.html" class="btn-v px-5 py-2.5 text-sm inline-block">Dashboard</a>
+    `;
+
+    // Toggle dropdown on click (mobile-friendly)
+    const profBtn  = document.getElementById('prof-btn');
+    const profDrop = document.getElementById('prof-drop');
+    profBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profDrop.style.display = profDrop.style.display === 'block' ? 'none' : 'block';
+    });
+    document.addEventListener('click', () => { if(profDrop) profDrop.style.display='none'; });
+
+    // Switch to Author → OTP modal
+    document.getElementById('sw-author-btn')?.addEventListener('click', () => {
+      profDrop.style.display = 'none';
+      openLoginModal({ onSuccess: () => { window.location.href='/dashboard.html'; } });
+    });
+  }
+
+  buildAuthNav();
+
+  // If NOT logged in, "Organizer Login" → OTP modal instead of page
+  document.querySelector('a[href="author-login.html"]')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openLoginModal();
+  });
+
+  // ── Load event pricing cards ─────────────────────────────────
+  const SYM = { INR:'₹', USD:'$', EUR:'€' };
+  const GRADS = [
+    'from-violet-500 to-indigo-500',
+    'from-emerald-500 to-teal-500',
+    'from-amber-400 to-orange-500',
+    'from-pink-500 to-rose-500',
+    'from-sky-500 to-blue-600',
+    'from-fuchsia-500 to-purple-600',
+  ];
+
+  async function loadEvents() {
+    const grid = document.getElementById('ev-grid');
+    const none = document.getElementById('no-ev');
+    try {
+      const res  = await fetch('/api/v1/events');
+      const json = await res.json();
+      const all  = json.data?.events || json.data || [];
+      const priced = all.filter(e => e.price > 0);
+
+      grid.innerHTML = '';
+      if (!priced.length) { none.classList.remove('hidden'); return; }
+
+      priced.forEach((ev, i) => {
+        const sym     = SYM[ev.currency] || '₹';
+        const joined  = ev.totalUsersJoined || 0;
+        const revenue = (ev.price * joined).toLocaleString('en-IN');
+        const price   = `${sym}${Number(ev.price).toLocaleString('en-IN')}`;
+        const date    = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+        const grad    = GRADS[i % GRADS.length];
+        const author  = ev.createdBy?.name || 'Organizer';
+
+        const card = document.createElement('div');
+        card.className = `ec bg-white rounded-2xl shadow-md overflow-hidden au`;
+        card.style.animationDelay = `${0.05 + i * 0.07}s`;
+        card.innerHTML = `
+          <div class="h-1.5 bg-gradient-to-r ${grad}"></div>
+          <div class="p-6">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <h3 class="font-bold text-gray-900 text-base leading-snug flex-1 min-w-0 truncate">${ev.name}</h3>
+              <span class="flex-shrink-0 text-xl font-black text-gray-900">${price}</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-1">${date}${ev.category ? ' · '+ev.category : ''}</p>
+            <p class="text-xs text-gray-400 flex items-center gap-1 mb-4">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Created by: <strong class="text-gray-600 ml-1">${author}</strong>
+            </p>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+              <div class="bg-gray-50 rounded-xl p-3 text-center">
+                <p class="text-xs text-gray-400 font-semibold">Joined</p>
+                <p class="font-bold text-gray-800 text-lg">${joined.toLocaleString()}</p>
+              </div>
+              <div class="bg-gray-50 rounded-xl p-3 text-center">
+                <p class="text-xs text-gray-400 font-semibold">Revenue</p>
+                <p class="font-bold text-gray-800 text-lg">${sym}${revenue}</p>
+              </div>
+            </div>
+            <a href="user-login.html?returnTo=feedback.html" class="block w-full text-center py-2.5 rounded-full text-sm font-bold text-white bg-gradient-to-r ${grad} hover:opacity-90 transition hover:scale-[1.02]">
+              Join for ${price}
+            </a>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    } catch {
+      grid.innerHTML = '';
+      none.classList.remove('hidden');
+    }
+  }
+
+  loadEvents();
+</script>
 </body>
 </html>
 

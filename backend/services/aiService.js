@@ -34,20 +34,20 @@ const generateAIAnalysis = async (eventIds, stats = {}) => {
   // Fetch only the fields needed for analysis — fast lean query
   const feedbacks = await Feedback.find(
     { eventId: { $in: eventIds } },
-    'rating nps comment suggestion sentiment createdAt'
+    'overallRating recommendationScore comments createdAt'
   ).lean();
 
   if (!feedbacks.length) return _emptyPayload();
 
-  const comments    = feedbacks.map((f) => f.comment    || '').filter(Boolean);
-  const suggestions = feedbacks.map((f) => f.suggestion || '').filter(Boolean);
-  const allTexts    = [...comments, ...suggestions];
+  const comments    = feedbacks.map((f) => f.comments    || '').filter(Boolean);
+  const suggestions = []; // Removed since there is no suggestion field
+  const allTexts    = [...comments];
 
   // ── 1. Sentiment Distribution ──────────────────────────────────────────
   const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
   for (const f of feedbacks) {
     // Use stored sentiment if already computed, otherwise derive
-    const label = f.sentiment || classifySentiment(f.rating, f.comment);
+    const label = f.sentiment || classifySentiment(f.overallRating, f.comments);
     sentimentCounts[label] = (sentimentCounts[label] || 0) + 1;
   }
   const total = feedbacks.length;
@@ -86,30 +86,47 @@ const generateAIAnalysis = async (eventIds, stats = {}) => {
     const avgOf = (arr, key) => arr.reduce((s, f) => s + (f[key] || 0), 0) / arr.length;
 
     const prevStats = {
-      avgRating:      Math.round(avgOf(older,  'rating') * 10) / 10,
-      avgNPS:         Math.round(avgOf(older,  'nps')    * 10) / 10,
+      avgRating:      Math.round(avgOf(older,  'overallRating') * 10) / 10,
+      avgNPS:         Math.round(avgOf(older,  'recommendationScore')    * 10) / 10,
       totalResponses: older.length,
     };
     const currStats = {
-      avgRating:      Math.round(avgOf(recent, 'rating') * 10) / 10,
-      avgNPS:         Math.round(avgOf(recent, 'nps')    * 10) / 10,
+      avgRating:      Math.round(avgOf(recent, 'overallRating') * 10) / 10,
+      avgNPS:         Math.round(avgOf(recent, 'recommendationScore')    * 10) / 10,
       totalResponses: recent.length,
     };
     trend = computeTrend(currStats, prevStats);
   }
+  let result;
+  try {
+    // Timeout wrapper for future external API (e.g., Gemini) integration
+    const aiPromise = new Promise((resolve) => {
+      resolve({
+        summary,
+        sentimentDistribution,
+        keywords,
+        topSuggestions,
+        topCommentWords,
+        notablePhrases,
+        healthScore,
+        trend,
+        totalCommentsAnalyzed: comments.length,
+        totalSuggestionsAnalyzed: suggestions.length,
+      });
+    });
 
-  return {
-    summary,
-    sentimentDistribution,
-    keywords,
-    topSuggestions,
-    topCommentWords,
-    notablePhrases,
-    healthScore,
-    trend,
-    totalCommentsAnalyzed:    comments.length,
-    totalSuggestionsAnalyzed: suggestions.length,
-  };
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('AI Analytics Generation Timeout')), 8000)
+    );
+
+    result = await Promise.race([aiPromise, timeoutPromise]);
+  } catch (err) {
+    const logger = require('../utils/logger');
+    logger.error('AI Service Failed:', err);
+    return _emptyPayload(); // Fallback on timeout or failure
+  }
+
+  return result;
 };
 
 /**
@@ -140,4 +157,4 @@ const _emptyPayload = () => ({
   totalSuggestionsAnalyzed: 0,
 });
 
-module.exports = { generateAIAnalysis, getSentimentLabel };
+module.exports = { generateAIAnalysis, getSentimentLabel: classifySentiment };

@@ -62,9 +62,9 @@ export async function renderHistory(page = 1) {
     // Render flat list instead of grouping by event cards
     grid.innerHTML = all.map((f) => {
       const evName    = escapeHtml(f.eventName || eventNameMap[f.eventId] || 'Unknown Event');
-      const ratingColor = f.rating >= 4 ? 'var(--success)' : f.rating === 3 ? 'var(--warning)' : 'var(--danger)';
+      const ratingColor = f.overallRating >= 4 ? 'var(--success)' : f.overallRating === 3 ? 'var(--warning)' : 'var(--danger)';
       const date      = formatDate(f.createdAt);
-      const stars     = '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
+      const stars     = '★'.repeat(f.overallRating) + '☆'.repeat(5 - f.overallRating);
 
       return `
         <div class="list-item" style="padding: 16px 20px;">
@@ -75,9 +75,9 @@ export async function renderHistory(page = 1) {
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
               <span style="font-size:0.875rem;font-weight:700;color:${ratingColor};letter-spacing:1px;">${stars}</span>
-              <span class="badge ${f.rating >= 4 ? 'badge-green' : f.rating === 3 ? 'badge-amber' : 'badge-red'}">${f.rating}/5</span>
+              <span class="badge ${f.overallRating >= 4 ? 'badge-green' : f.overallRating === 3 ? 'badge-amber' : 'badge-red'}">${f.overallRating}/5</span>
             </div>
-            <div class="list-item-body">${escapeHtml(f.comment || 'No comment provided.')}</div>
+            <div class="list-item-body">${escapeHtml(f.comments || 'No comment provided.')}</div>
           </div>
         </div>`;
     }).join('');

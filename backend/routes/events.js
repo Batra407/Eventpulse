@@ -3,17 +3,17 @@ const router  = express.Router();
 const {
   getEvents, createEvent, getEventById, updateEvent, deleteEvent,
 } = require('../controllers/eventController');
-const { verifyToken }    = require('../middleware/authMiddleware');
-const asyncHandler       = require('../middleware/asyncHandler');
-const { validateEvent }  = require('../middleware/validate');
+const { verifyJWT, verifyOrganizer, verifyApprovedOrganizer } = require('../middleware/authMiddleware');
+const asyncHandler      = require('../middleware/asyncHandler');
+const { validateEvent } = require('../middleware/validate');
 
-// Public — students can browse events
+// Public — attendees can browse events (unchanged)
 router.get('/', asyncHandler(getEvents));
 
-// Protected — organizers manage their own events
-router.post('/',      verifyToken, validateEvent, asyncHandler(createEvent));
-router.get('/:id',    verifyToken, asyncHandler(getEventById));
-router.put('/:id',    verifyToken, asyncHandler(updateEvent));
-router.delete('/:id', verifyToken, asyncHandler(deleteEvent));
+// Protected — full chain: JWT + Organizer role + Approved status
+router.post('/',      verifyJWT, verifyOrganizer, verifyApprovedOrganizer, validateEvent, asyncHandler(createEvent));
+router.get('/:id',    verifyJWT, verifyOrganizer, verifyApprovedOrganizer, asyncHandler(getEventById));
+router.put('/:id',    verifyJWT, verifyOrganizer, verifyApprovedOrganizer, asyncHandler(updateEvent));
+router.delete('/:id', verifyJWT, verifyOrganizer, verifyApprovedOrganizer, asyncHandler(deleteEvent));
 
 module.exports = router;

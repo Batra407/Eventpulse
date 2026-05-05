@@ -68,8 +68,8 @@
 
       <!-- Auth buttons -->
       <div class="hidden md:flex items-center gap-3 ml-auto" id="nav-auth-area">
-        <a href="login.html" class="bg-white border border-gray-200 px-5 py-2.5 rounded-full text-gray-700 text-sm font-semibold hover:bg-gray-50 transition duration-300 ease-in-out shadow-sm hover:shadow">Organizer Login</a>
-        <a href="register.html" class="bg-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-700 transition duration-300 ease-in-out shadow-md hover:shadow-lg">Get Started</a>
+        <a href="author-login.html" class="border border-black px-5 py-2.5 rounded-full text-black text-sm font-bold hover:bg-black hover:text-white transition duration-300 ease-in-out hover:scale-105 shadow-sm">Organizer Login</a>
+        <a href="register.html" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition duration-300 ease-in-out hover:scale-105 shadow-md">Get Started</a>
       </div>
     </div>
   </nav>
@@ -157,7 +157,7 @@
         <p class="text-gray-600 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">Create your free organizer account and run your first smart event today.</p>
         
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="register.html" class="bg-black text-white px-8 py-4 rounded-full font-bold text-base hover:opacity-80 transition duration-300 ease-in-out hover:scale-105 shadow-md flex items-center justify-center gap-2" id="about-cta-btn">
+          <a href="register.html" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-8 py-4 rounded-full font-bold text-base hover:opacity-90 transition duration-300 ease-in-out hover:scale-105 shadow-md flex items-center justify-center gap-2" id="about-cta-btn">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
             Get Started Free
           </a>
@@ -176,11 +176,6 @@
           </div>
           <span class="text-black font-bold text-sm tracking-tight">EventPulse</span>
         </div>
-        
-        <div class="flex items-center gap-6">
-          <a href="index.html" class="text-gray-500 hover:text-black font-semibold text-sm transition duration-300">Home</a>
-          <a href="login.html" class="text-gray-500 hover:text-black font-semibold text-sm transition duration-300">Login</a>
-          <a href="register.html" class="text-gray-500 hover:text-black font-semibold text-sm transition duration-300">Register</a>
         </div>
       </div>
       <div class="mt-8 text-center md:text-left text-gray-400 text-xs font-medium">
@@ -196,26 +191,27 @@
     }, { threshold: 0.08 });
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-    // Auth-aware navbar
-    (function() {
-      const token = localStorage.getItem('ep_token');
-      const org   = JSON.parse(localStorage.getItem('ep_organizer') || 'null');
-      const area  = document.getElementById('nav-auth-area');
-      if (!area || !token || !org) return;
-
-      const initial = (org.name||'U')[0].toUpperCase();
-      area.innerHTML = `
-        <a href="dashboard.html" class="flex items-center gap-2 text-black hover:bg-black/5 text-sm font-bold px-4 py-2 rounded-full transition duration-300 ease-in-out">
-          <div class="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white text-xs flex-shrink-0">${initial}</div>
-          <span class="hidden sm:inline">${org.name.split(' ')[0]}</span>
-        </a>
-        <a href="dashboard.html" class="bg-black text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-80 transition duration-300 ease-in-out shadow-sm">Dashboard</a>
-        <button onclick="(function(){localStorage.removeItem('ep_token');localStorage.removeItem('ep_organizer');window.location.reload();})()" class="border border-gray-300 text-gray-700 hover:text-black hover:border-black text-sm font-semibold px-4 py-2.5 rounded-full transition duration-300 ease-in-out">Logout</button>`;
-      
-      const cta = document.getElementById('about-cta-btn');
-      if (cta) { cta.href='dashboard.html'; cta.innerHTML='Go to Dashboard →'; }
+    // Auth-aware navbar (cookie-based)
+    (async function() {
+      const area = document.getElementById('nav-auth-area');
+      if (!area) return;
+      try {
+        const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
+        if (!res.ok) return;
+        const org = (await res.json()).data;
+        if (!org || org.organizerStatus !== 'approved') return;
+        const initial = (org.name||'U')[0].toUpperCase();
+        area.innerHTML = `
+          <a href="dashboard.html" class="flex items-center gap-2 text-black hover:bg-black/5 text-sm font-bold px-4 py-2 rounded-full transition duration-300 ease-in-out">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs flex-shrink-0">${initial}</div>
+            <span class="hidden sm:inline">${org.name.split(' ')[0]}</span>
+          </a>
+          <a href="dashboard.html" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-90 transition duration-300 ease-in-out shadow-sm">Dashboard</a>
+          <button onclick="(async function(){try{await fetch('/api/v1/auth/logout',{method:'POST',credentials:'include'});}catch{}window.location.reload();})()" class="border border-gray-300 text-gray-700 hover:text-black hover:border-black text-sm font-semibold px-4 py-2.5 rounded-full transition duration-300 ease-in-out">Logout</button>`;
+        const cta = document.getElementById('about-cta-btn');
+        if (cta) { cta.href='dashboard.html'; cta.innerHTML='Go to Dashboard ?'; }
+      } catch {}
     })();
   </script>
 </body>
 </html>
-

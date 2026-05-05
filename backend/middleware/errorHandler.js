@@ -1,17 +1,9 @@
 /**
  * errorHandler.js — Global Express error handler.
- *
- * All API error responses use the standardized shape:
- *   { success: false, message: "Human-readable description" }
- *
- * Handles:
- *  - AppError (operational)           → statusCode + message
- *  - Mongoose ValidationError         → 400 with joined field messages
- *  - Mongoose CastError (bad ObjectId)→ 400
- *  - MongoDB duplicate key (11000)    → 409 conflict
- *  - JWT errors                       → 401
- *  - Everything else                  → 500
  */
+
+const { sendError } = require('../utils/response');
+const logger = require('../utils/logger');
 
 class AppError extends Error {
   constructor(message, statusCode = 500) {
@@ -25,49 +17,43 @@ class AppError extends Error {
 const errorHandler = (err, req, res, _next) => {
   let statusCode = err.statusCode || 500;
   let message    = err.message    || 'Internal Server Error';
+  let details    = null;
 
-  // ── Mongoose Validation Error ──────────────────────────────────────────
   if (err.name === 'ValidationError') {
     statusCode = 400;
     message = Object.values(err.errors).map((e) => e.message).join('. ');
-  }
-
-  // ── Mongoose CastError (invalid ObjectId format) ───────────────────────
-  if (err.name === 'CastError') {
+  } else if (err.name === 'CastError') {
     statusCode = 400;
     message = `Invalid ${err.path}: ${err.value}`;
-  }
-
-  // ── MongoDB Duplicate Key ──────────────────────────────────────────────
-  if (err.code === 11000) {
+  } else if (err.code === 11000) {
     statusCode = 409;
     const field = Object.keys(err.keyValue || {}).join(', ');
     message = `Duplicate value for field: ${field}`;
-  }
-
-  // ── JWT Errors ──────────────────────────────────────────────────────────
-  if (err.name === 'JsonWebTokenError') {
+  } else if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
     message = 'Invalid or malformed token';
-  }
-  if (err.name === 'TokenExpiredError') {
+  } else if (err.name === 'TokenExpiredError') {
     statusCode = 401;
     message = 'Session expired — please log in again';
+  } else if (err.name === 'ZodError') {
+    statusCode = 400;
+    message = 'Validation Error';
+    details = err.errors;
   }
 
-  // ── Development logging ─────────────────────────────────────────────────
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(`[ERROR ${statusCode}] ${message}`);
-    if (!err.isOperational) console.error(err.stack);
+  const traceId = req.headers['x-trace-id'] || req.id || 'N/A';
+  
+  if (statusCode >= 500) {
+    logger.error(`[${traceId}] ${message}`, { stack: err.stack, method: req.method, url: req.originalUrl });
+  } else {
+    logger.warn(`[${traceId}] ${message}`, { method: req.method, url: req.originalUrl });
   }
 
-  // ── Production: hide internals ──────────────────────────────────────────
-  const safeMessage =
-    process.env.NODE_ENV === 'production' && !err.isOperational
-      ? 'Something went wrong — please try again'
-      : message;
+  const safeMessage = process.env.NODE_ENV === 'production' && !err.isOperational && statusCode >= 500
+    ? 'Something went wrong — please try again'
+    : message;
 
-  res.status(statusCode).json({ success: false, message: safeMessage });
+  sendError(res, safeMessage, process.env.NODE_ENV !== 'production' ? details || err.stack : details, statusCode);
 };
 
 module.exports = { AppError, errorHandler };
