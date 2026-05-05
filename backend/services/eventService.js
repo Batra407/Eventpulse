@@ -112,7 +112,7 @@ const create = async (data, ownerId, ip = '') => {
   );
 
   const attendanceLink = `/attendance.html?eventId=${eventId.toString()}&token=${encodeURIComponent(signedToken)}`;
-  const baseUrl = process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://${getLocalIp()}:5000`);
+  const baseUrl = process.env.FRONTEND_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://${getLocalIp()}:5000`));
   const fullUrl = `${baseUrl}${attendanceLink}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrl)}`;
 
@@ -216,7 +216,7 @@ const regenerateQR = async (eventId, ownerId, ip = '') => {
   );
 
   const attendanceLinkRegen = `/attendance.html?eventId=${event._id}&token=${encodeURIComponent(signedToken)}`;
-  const baseUrlRegen = process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://${getLocalIp()}:5000`);
+  const baseUrlRegen = process.env.FRONTEND_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://${getLocalIp()}:5000`));
   const fullUrlRegen = `${baseUrlRegen}${attendanceLinkRegen}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrlRegen)}`;
 
