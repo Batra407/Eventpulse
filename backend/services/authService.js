@@ -72,7 +72,7 @@ const register = async (email, name, password) => {
     email:           emailLc,
     password,
     role:            'organizer',
-    organizerStatus: 'pending',
+    organizerStatus: 'approved',  // Auto-approved; remove this for manual approval workflow
     isSuspended:     false,
   });
 
