@@ -141,6 +141,13 @@ app.get('/ready', async (_req, res) => {
 // Versioned alias so frontend apiFetch('/api/v1/health') also works
 app.get('/api/v1/health', (_req, res) => res.status(200).json({ status: 'UP', timestamp: new Date() }));
 
+// ── Serve static frontend files ────────────────────────────────────────────
+// This MUST come before API routes so .html, .js, .css files are served directly.
+app.use(express.static(path.join(__dirname, '../frontend'), {
+  index: 'index.html',
+  extensions: ['html'],
+}));
+
 // ── API Routes (v1) ────────────────────────────────────────────────────────
 const apiV1 = express.Router();
 apiV1.use('/auth',       authRoutes);
@@ -165,9 +172,14 @@ app.get('/login-page',     (_req, res) => res.redirect(301, '/author-login.html'
 app.get('/dashboard-page', (_req, res) => res.redirect(301, '/dashboard.html'));
 app.get('/register-page',  (_req, res) => res.redirect(301, '/register.html'));
 
-// ── Frontend fallback ──────────────────────────────────────────────────────
+// ── Frontend fallback for SPA routes (not files) ────────────────────────
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  // Only fallback to index.html for non-file routes (no dot in path)
+  if (!req.path.includes('.')) {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
 });
 
 // ── Global Error Handler ───────────────────────────────────────────────────
