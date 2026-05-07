@@ -21,7 +21,7 @@ const getHistory = async (req, res) => {
     return sendSuccess(res, 'No history found', { feedbacks: [], total: 0, page, pages: 0 });
   }
 
-  const query = { eventId: { $in: eventIds } };
+  const query = { eventId: { $in: eventIds }, isDeleted: false };
 
   if (start || end) {
     query.createdAt = {};

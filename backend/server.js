@@ -98,6 +98,24 @@ const adminLimiter = rateLimit({
 app.use('/api/admin', adminLimiter);
 app.use('/api/v1/admin', adminLimiter);
 
+// Public attendance endpoint — high capacity for burst event check-ins (50+ concurrent)
+const attendanceLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 500 : 10000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Key by IP + eventId so one event doesn't starve another
+  keyGenerator: (req) => {
+    const eventId = req.body?.eventId || req.query?.eventId || 'unknown';
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+    return `attendance:${ip}:${eventId}`;
+  },
+  message: { success: false, message: 'Too many attendance requests — please wait a moment and try again' },
+  skip: (req) => req.method !== 'POST', // Only apply to POSTs (the mark-attendance action)
+});
+app.use('/api/v1/attendance', attendanceLimiter);
+app.use('/api/attendance', attendanceLimiter);
+
 // ── Request Logger & Trace ID ──────────────────────────────────────────────
 const crypto = require('crypto');
 const logger = require('./utils/logger');

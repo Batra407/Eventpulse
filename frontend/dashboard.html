@@ -336,7 +336,7 @@
                 <span style="font-size:10.5px;font-weight:600;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.22);color:#34d399;border-radius:99px;padding:2px 8px;">▲ 8%</span>
               </div>
               <div id="stat-attendees" style="font-size:30px;font-weight:800;line-height:1;margin-bottom:3px;">— </div>
-              <div style="font-size:12px;color: #44403c;margin-bottom:12px;">Total Responses</div>
+              <div style="font-size:12px;color: #44403c;margin-bottom:12px;">Total Attendees</div>
               <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;"><div id="stat-attendees-bar" style="height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#34d399,#10b981);transition:width 0.8s ease;"></div></div>
               <div style="display:flex;justify-content:space-between;font-size:10px;color: #44403c;margin-top:5px;"><span id="stat-attendees-pct">— </span><span id="stat-attendees-cap">— </span></div>
             </div>
@@ -826,9 +826,10 @@
       if (!el) return;
       const start = Date.now(), from = parseFloat(el.textContent.replace(/[^0-9.]/g,'')) || 0;
       (function tick() {
-        const p = Math.min((Date.now()-start)/dur, 1), e = 1-Math.pow(2,-10*p);
+        const p = Math.min((Date.now()-start)/dur, 1);
+        const e = p === 1 ? 1 : 1-Math.pow(2,-10*p);
         const v = from + (target-from)*e;
-        el.textContent = dec > 0 ? v.toFixed(dec)+suffix : Math.floor(v).toLocaleString()+suffix;
+        el.textContent = dec > 0 ? v.toFixed(dec)+suffix : Math.round(v).toLocaleString()+suffix;
         if (p < 1) requestAnimationFrame(tick);
       })();
     }
@@ -881,8 +882,9 @@
           if (el) { el.textContent = '…'; el.style.opacity = '0.4'; }
         });
 
+        const cb = Date.now(); // cache-buster — prevents Vercel CDN stale responses
         const [dashRes, histRes, aiRes] = await Promise.all([
-          apiFetch('/api/dashboard'),
+          apiFetch(`/api/dashboard?_cb=${cb}`),
           apiFetch('/api/history?limit=200'),
           apiFetch('/api/ai/summary').catch(() => ({ data: null })),
         ]);
@@ -901,8 +903,7 @@
         FEEDBACK_DATA = histRes.data?.feedbacks || [];
 
         // Recalculate aggregate stats directly from EVENTS_DATA (ground truth).
-        // The server-side stats can be stale due to serverless caching; each
-        // individual event's totalResponses is always accurate.
+        // If event counters are all 0 but we have feedback records, use those as fallback.
         {
           let _total = 0, _sumR = 0, _sumNPS = 0, _att = 0;
           EVENTS_DATA.forEach(e => {
@@ -912,6 +913,17 @@
             _sumNPS += (e.npsScore   || 0) * r;
             _att    += e.totalAttendees || 0;
           });
+
+          // Fallback: if all event counters are 0 but we have actual feedback records,
+          // compute stats directly from the feedback history (self-healing on the frontend).
+          if (_total === 0 && FEEDBACK_DATA.length > 0) {
+            _total = FEEDBACK_DATA.length;
+            const sumR   = FEEDBACK_DATA.reduce((s, f) => s + (f.overallRating        || 0), 0);
+            const sumNPS = FEEDBACK_DATA.reduce((s, f) => s + (f.recommendationScore  || 0), 0);
+            _sumR   = sumR;
+            _sumNPS = sumNPS;
+          }
+
           DASH_STATS = {
             totalResponses: _total,
             totalAttendees: _att,

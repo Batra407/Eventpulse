@@ -8,12 +8,73 @@ const Feedback = require('../models/Feedback');
 
 /**
  * Get all event IDs and basic info for a specific organizer.
+ * Also runs a self-heal check: if any event has totalResponses=0 but actual
+ * feedback exists in the Feedback collection, recalculate and fix it.
  */
 const getOrganizerEvents = async (ownerId) => {
   const events = await Event.find({ ownerId, isDeleted: false })
     .select('_id title date category totalResponses totalAttendees avgRating npsScore attendanceEnabled attendanceToken attendanceLink qrCode cacheVersion')
     .sort({ date: -1 })
     .lean();
+
+  // ── Full self-heal: verify ALL events against actual Feedback collection counts ──
+  // This catches both zero-count and under-counted events (e.g. race conditions that
+  // left totalResponses=1 when 2 feedbacks actually exist).
+  const allEventIds = events.map(e => e._id);
+
+  if (allEventIds.length > 0) {
+    // Get the ground-truth count from Feedback collection for every event
+    const realCounts = await Feedback.aggregate([
+      { $match: { eventId: { $in: allEventIds }, isDeleted: false } },
+      {
+        $group: {
+          _id: '$eventId',
+          actualCount:     { $sum: 1 },
+          actualAvgRating: { $avg: '$overallRating' },
+          actualAvgNPS:    { $avg: '$recommendationScore' },
+        }
+      }
+    ]);
+
+    // Build a lookup map: eventId -> real counts
+    const realMap = Object.fromEntries(
+      realCounts.map(r => [r._id.toString(), r])
+    );
+
+    // Find events whose stored totalResponses doesn't match the ground truth
+    const healOps = [];
+    events.forEach(e => {
+      const real = realMap[e._id.toString()];
+      const actualCount = real ? real.actualCount : 0;
+      // Heal if stored count differs from real count (including under-counts, not just zeros)
+      if ((e.totalResponses || 0) !== actualCount) {
+        healOps.push({
+          updateOne: {
+            filter: { _id: e._id },
+            update: {
+              $set: {
+                totalResponses: actualCount,
+                avgRating:      real ? Number((real.actualAvgRating || 0).toFixed(2)) : 0,
+                npsScore:       real ? Number((real.actualAvgNPS    || 0).toFixed(2)) : 0,
+                cacheVersion:   Date.now(),
+              }
+            }
+          }
+        });
+        // Patch the in-memory event so the response is immediately correct
+        e.totalResponses = actualCount;
+        e.avgRating      = real ? Number((real.actualAvgRating || 0).toFixed(2)) : 0;
+        e.npsScore       = real ? Number((real.actualAvgNPS    || 0).toFixed(2)) : 0;
+      }
+    });
+
+    if (healOps.length > 0) {
+      // Fire-and-forget the DB fix — don't block the dashboard response
+      Event.bulkWrite(healOps).catch(err =>
+        console.error('[self-heal] bulkWrite failed:', err.message)
+      );
+    }
+  }
 
   return {
     events,

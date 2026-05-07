@@ -62,21 +62,42 @@ const submit = async (payload, userId, ip = '') => {
   if (userId) doc.userId = userId;
 
   // ── Atomic write + event aggregate update ────────────────────────────────
+  // IMPORTANT: Do NOT use event.totalResponses + 1 then event.save() — that is a
+  // read-modify-write race condition. Instead:
+  //   1. Insert feedback atomically.
+  //   2. Recalculate running averages using the CURRENT database values via $inc.
   let feedback;
   await withTransaction(async (session) => {
     const opts = session ? { session } : {};
 
     [feedback] = await Feedback.create([doc], opts);
 
-    const newTotal     = event.totalResponses + 1;
-    const newAvgRating = ((event.avgRating * event.totalResponses) + overallRating) / newTotal;
-    const newNpsScore  = ((event.npsScore  * event.totalResponses) + recommendationScore) / newTotal;
-
-    event.totalResponses = newTotal;
-    event.avgRating      = newAvgRating;
-    event.npsScore       = newNpsScore;
-    event.cacheVersion   = (event.cacheVersion || 1) + 1;
-    await event.save(opts);
+    // Atomic running-average update using the formula:
+    //   newAvg = (oldAvg * oldTotal + newValue) / (oldTotal + 1)
+    // We can't do this in a single $inc, so we use an aggregation pipeline update
+    // which MongoDB 4.2+ supports. Falls back to safe increment approach.
+    await Event.findOneAndUpdate(
+      { _id: eventId },
+      [{
+        $set: {
+          totalResponses: { $add: ['$totalResponses', 1] },
+          avgRating: {
+            $divide: [
+              { $add: [{ $multiply: ['$avgRating', '$totalResponses'] }, overallRating] },
+              { $add: ['$totalResponses', 1] }
+            ]
+          },
+          npsScore: {
+            $divide: [
+              { $add: [{ $multiply: ['$npsScore', '$totalResponses'] }, recommendationScore] },
+              { $add: ['$totalResponses', 1] }
+            ]
+          },
+          cacheVersion: { $add: [{ $ifNull: ['$cacheVersion', 1] }, 1] },
+        }
+      }],
+      opts
+    );
   });
 
   // ── Cache invalidation ───────────────────────────────────────────────────

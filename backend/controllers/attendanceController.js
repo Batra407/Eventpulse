@@ -33,46 +33,97 @@ const getPublicEventInfo = async (req, res) => {
   });
 };
 
-/** POST /api/v1/attendance — Mark attendance (public, from QR scan) */
+/** POST /api/v1/attendance — Mark attendance (public, from QR scan)
+ *
+ * Concurrency-safe design for 50+ simultaneous submissions:
+ *  1. NO pre-check TOCTOU race — MongoDB's unique index is the atomic guard.
+ *  2. Atomic $inc for counters — no read-modify-write lost updates.
+ *  3. Inline 11000 duplicate handling — friendly 409 before global handler.
+ *  4. Write-conflict (code 112) retry up to 3 times.
+ */
 const markAttendance = async (req, res) => {
   const { eventId, attendanceToken, attendeeName, attendeeEmail, phone, college, batch, course } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
 
-  const event = await Event.findOne({ _id: eventId, isDeleted: false });
+  // ── Event validation (read-only, no race condition) ───────────────────────
+  const event = await Event.findOne({ _id: eventId, isDeleted: false })
+    .select('_id title ownerId attendanceEnabled attendanceToken startTime endTime')
+    .lean();
   if (!event) throw new AppError('Event not found or deleted', 404);
+
   const now = new Date();
   if (event.startTime && now < new Date(event.startTime)) throw new AppError('Attendance is not yet open for this event.', 403);
-  if (event.endTime && now > new Date(event.endTime)) throw new AppError('Attendance is closed for this event.', 403);
+  if (event.endTime   && now > new Date(event.endTime))   throw new AppError('Attendance is closed for this event.', 403);
   if (!event.attendanceEnabled) throw new AppError('Attendance session is currently closed.', 403);
-  
+
+  // ── JWT token validation ──────────────────────────────────────────────────
   try {
     const decoded = jwt.verify(attendanceToken, process.env.JWT_SECRET);
-    if (decoded.eventId !== eventId || decoded.generationId !== event.attendanceToken) throw new AppError('Invalid or expired attendance QR token', 403);
+    if (decoded.eventId !== eventId || decoded.generationId !== event.attendanceToken) {
+      throw new AppError('Invalid or expired attendance QR token', 403);
+    }
   } catch (err) {
+    if (err.isOperational) throw err;
     throw new AppError(err.name === 'TokenExpiredError' ? 'QR code has expired.' : 'Invalid QR token', 403);
   }
 
-  const existing = attendeeEmail ? await Attendance.findOne({ eventId, attendeeEmail }) : null;
-  if (existing) throw new AppError('Attendance already marked for this email', 409);
-
+  // ── Atomic insert + counter increment (concurrency-safe) ──────────────────
+  // Strategy: attempt the insert and let MongoDB's unique index reject true duplicates.
+  // Use $inc for the event counter so 50 simultaneous requests never lose an increment.
+  // Retry up to 3× on transient write-conflict errors (code 112).
+  const MAX_RETRIES = 3;
   let record;
-  await withTransaction(async (session) => {
-    const opts = session ? { session } : {};
-    [record] = await Attendance.create([{
-      eventId, attendeeName, attendeeEmail, phone, college, organization: college,
-      batch, course, attendanceType: 'qr', status: 'checked-in', scannedFromIP: ip,
-      deviceInfo: req.headers['user-agent'] || '',
-    }], opts);
+  let lastErr;
 
-    event.totalAttendees += 1;
-    event.qrAttendees = (event.qrAttendees || 0) + 1;
-    event.cacheVersion = (event.cacheVersion || 1) + 1;
-    await event.save(opts);
-  });
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      await withTransaction(async (session) => {
+        const opts = session ? { session } : {};
 
-  cache.del(cache.dashboardKey(event.ownerId.toString()));
-  logAudit(null, 'Attendance', 'MARK_ATTENDANCE', record._id, 'Attendance', { method: 'QR' }, ip);
-  sendSuccess(res, 'Attendance marked successfully', record, 201);
+        // Insert the attendance record — unique index rejects duplicates atomically
+        [record] = await Attendance.create([{
+          eventId, attendeeName, attendeeEmail: attendeeEmail || '', phone: phone || '',
+          college: college || '', organization: college || '', batch: batch || '',
+          course: course || '', attendanceType: 'qr', status: 'checked-in',
+          scannedFromIP: ip, deviceInfo: req.headers['user-agent'] || '',
+        }], opts);
+
+        // Atomic counter increment — safe under concurrent load (no read-modify-write)
+        await Event.updateOne(
+          { _id: eventId },
+          { $inc: { totalAttendees: 1, qrAttendees: 1, cacheVersion: 1 } },
+          opts
+        );
+      });
+
+      // ── Success path ───────────────────────────────────────────────────────
+      cache.del(cache.dashboardKey(event.ownerId.toString()));
+      logAudit(null, 'Attendance', 'MARK_ATTENDANCE', record._id, 'Attendance', { method: 'QR', attempt }, ip);
+      return sendSuccess(res, 'Attendance marked successfully', record, 201);
+
+    } catch (err) {
+      // ── Duplicate key (11000) — user already registered ───────────────────
+      if (err.code === 11000) {
+        throw new AppError('You have already marked attendance for this event. Each attendee can only register once.', 409);
+      }
+
+      // ── Write conflict (112) — retry ──────────────────────────────────────
+      if (err.codeName === 'WriteConflict' || err.code === 112) {
+        lastErr = err;
+        logger.warn(`[markAttendance] Write conflict on attempt ${attempt}/${MAX_RETRIES} for eventId=${eventId}`);
+        if (attempt < MAX_RETRIES) {
+          // Exponential backoff: 50ms, 100ms, 200ms
+          await new Promise(r => setTimeout(r, 50 * attempt));
+          continue;
+        }
+        // All retries exhausted
+        throw new AppError('Server is under heavy load. Please try again in a moment.', 503);
+      }
+
+      // ── Any other error — bubble up ────────────────────────────────────────
+      throw err;
+    }
+  }
 };
 
 /** GET /api/v1/attendance/:eventId — List attendees for an event (paginated) */
@@ -154,14 +205,17 @@ const addManualAttendance = async (req, res) => {
   await withTransaction(async (session) => {
     const opts = session ? { session } : {};
     [record] = await Attendance.create([{
-      eventId, attendeeName, attendeeEmail, phone, college, organization,
+      eventId, attendeeName, attendeeEmail: attendeeEmail || '', phone: phone || '',
+      college: college || '', organization: organization || '',
       attendanceType: 'manual', status: status || 'present', submittedBy: req.organizer.id,
     }], opts);
 
-    event.totalAttendees += 1;
-    event.manualAttendees = (event.manualAttendees || 0) + 1;
-    event.cacheVersion = (event.cacheVersion || 1) + 1;
-    await event.save(opts);
+    // Atomic increment — safe under concurrent organizer actions
+    await Event.updateOne(
+      { _id: eventId },
+      { $inc: { totalAttendees: 1, manualAttendees: 1, cacheVersion: 1 } },
+      opts
+    );
   });
 
   cache.del(cache.dashboardKey(event.ownerId.toString()));

@@ -27,8 +27,15 @@ const errorHandler = (err, req, res, _next) => {
     message = `Invalid ${err.path}: ${err.value}`;
   } else if (err.code === 11000) {
     statusCode = 409;
-    const field = Object.keys(err.keyValue || {}).join(', ');
-    message = `Duplicate value for field: ${field}`;
+    const keyFields = Object.keys(err.keyValue || {});
+    // Friendly messages for known duplicate scenarios
+    if (keyFields.includes('attendeeEmail') || keyFields.includes('eventId')) {
+      message = 'You have already marked attendance for this event. Each attendee can only register once.';
+    } else if (keyFields.includes('email')) {
+      message = 'An account with this email already exists.';
+    } else {
+      message = 'This entry already exists. Duplicate submissions are not allowed.';
+    }
   } else if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
     message = 'Invalid or malformed token';

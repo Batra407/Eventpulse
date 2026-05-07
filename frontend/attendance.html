@@ -231,8 +231,17 @@
         show('success-state');
 
       } catch (err) {
-        errEl.textContent = err.message || 'Failed to submit. Check your connection.';
-        errEl.classList.remove('hidden');
+        // If server says duplicate → show the already-marked state gracefully
+        const isDuplicate = err.status === 409 || 
+          (err.message && (err.message.toLowerCase().includes('already') || err.message.toLowerCase().includes('duplicate')));
+        if (isDuplicate) {
+          localStorage.setItem(`attendance_${payload.eventId}`, JSON.stringify({ name, email, markedAt: new Date().toISOString() }));
+          document.getElementById('already-time').textContent = email ? `Email: ${email}` : `Name: ${name}`;
+          show('already-state');
+        } else {
+          errEl.textContent = err.message || 'Failed to submit. Check your connection.';
+          errEl.classList.remove('hidden');
+        }
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Mark My Attendance';

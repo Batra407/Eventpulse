@@ -87,9 +87,12 @@ export async function apiFetch(path, options = {}) {
     }
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const errBody = await res.json().catch(() => ({}));
       // Standardized error extraction (Phase 19)
-      throw new Error(err.message || err.error || `HTTP ${res.status}`);
+      const httpErr = new Error(errBody.message || errBody.error || `HTTP ${res.status}`);
+      httpErr.status = res.status;   // Attach status so callers can branch on 409, etc.
+      httpErr.data   = errBody;
+      throw httpErr;
     }
 
     return res.json();
